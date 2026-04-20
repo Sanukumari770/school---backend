@@ -4,13 +4,13 @@
 
 package config
 import (
-	"context"
-	"log"
-	"os" // import OS for secure //
-	"time"
+"context"
+"log"
+"os" // import OS for secure //
+"time"
 
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+"go.mongodb.org/mongo-driver/mongo"
+"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var DB *mongo.Database
