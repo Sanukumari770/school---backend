@@ -5,13 +5,14 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type Attendance struct {
+type Marks struct {
 	ID        primitive.ObjectID `bson:"_id,omitempty"`
 	StudentID primitive.ObjectID `bson:"student_id"`
-	TeacherID primitive.ObjectID `bson:"teacher_id"`
+	ExamID    primitive.ObjectID `bson:"exam_id"`
+	SubjectID primitive.ObjectID `bson:"subject_id"`
 
-	Date   string `bson:"date"`
-	Status string `bson:"status"`
+	Marks int    `bson:"marks"`
+	Grade string `bson:"grade"`
 
 	CreatedAt time.Time  `bson:"createdAt"`
 	UpdatedAt time.Time  `bson:"updatedAt"`

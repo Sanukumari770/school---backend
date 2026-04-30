@@ -4,28 +4,26 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"time"
-
-	"school/config"
-
-	"go.mongodb.org/mongo-driver/bson"
+"school/config"
+"go.mongodb.org/mongo-driver/bson"
 )
 
-// 📊 Dashboard
+// Dashboard
 func GetDashboard(w http.ResponseWriter, r *http.Request) {
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+	db := config.DB
 
-	studentCount, _ := config.DB.Collection("students").CountDocuments(ctx, bson.M{})
-	teacherCount, _ := config.DB.Collection("teachers").CountDocuments(ctx, bson.M{})
-	classCount, _ := config.DB.Collection("classes").CountDocuments(ctx, bson.M{})
-	feesCount, _ := config.DB.Collection("fees").CountDocuments(ctx, bson.M{})
+	students, _ := db.Collection("students").CountDocuments(context.TODO(), bson.M{})
+	teachers, _ := db.Collection("teachers").CountDocuments(context.TODO(), bson.M{})
+	parents, _ := db.Collection("parents").CountDocuments(context.TODO(), bson.M{})
+	admissions, _ := db.Collection("admissions").CountDocuments(context.TODO(), bson.M{})
 
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"students": studentCount,
-		"teachers": teacherCount,
-		"classes":  classCount,
-		"fees":     feesCount,
-	})
+	response := map[string]interface{}{
+		"total_students": students,
+		"total_teachers": teachers,
+		"total_parents": parents,
+		"total_admissions": admissions,
+	}
+
+	json.NewEncoder(w).Encode(response)
 }

@@ -12,12 +12,12 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-// ➕ Mark Attendance
-func MarkAttendance(w http.ResponseWriter, r *http.Request) {
+// Add Attendance
+func AddAttendance(w http.ResponseWriter, r *http.Request) {
 
-	var data models.Attendance
+	var attendance models.Attendance
 
-	err := json.NewDecoder(r.Body).Decode(&data)
+	err := json.NewDecoder(r.Body).Decode(&attendance)
 	if err != nil {
 		http.Error(w, "Invalid input", http.StatusBadRequest)
 		return
@@ -26,18 +26,18 @@ func MarkAttendance(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	_, err = config.DB.Collection("attendance").InsertOne(ctx, data)
+	_, err = config.DB.Collection("attendance").InsertOne(ctx, attendance)
 	if err != nil {
 		http.Error(w, "DB Error", http.StatusInternalServerError)
 		return
 	}
 
 	json.NewEncoder(w).Encode(map[string]string{
-		"message": "Attendance Marked",
+		"message": "Attendance Added",
 	})
 }
 
-// 📥 Get Attendance
+// Get Attendance
 func GetAttendance(w http.ResponseWriter, r *http.Request) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

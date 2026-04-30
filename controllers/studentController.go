@@ -11,61 +11,180 @@ import (
 
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// ➕ Add Student
-func AddStudent(w http.ResponseWriter, r *http.Request) {
-
+//  Create Student
+func CreateStudent(w http.ResponseWriter, r *http.Request) {
 	var student models.Student
-
-	err := json.NewDecoder(r.Body).Decode(&student)
-	if err != nil {
-		http.Error(w, "Invalid input", http.StatusBadRequest)
-		return
-	}
+	json.NewDecoder(r.Body).Decode(&student)
 
 	student.CreatedAt = time.Now()
+	student.UpdatedAt = time.Now()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	_, err = config.DB.Collection("students").InsertOne(ctx, student)
+	res, err := config.DB.Collection("students").InsertOne(context.TODO(), student)
 	if err != nil {
-		http.Error(w, "DB error", http.StatusInternalServerError)
+		http.Error(w, err.Error(), 500)
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]string{"message": "Student Added"})
+	json.NewEncoder(w).Encode(res)
 }
 
-// 📥 Get Students
+//  Get All Students
 func GetStudents(w http.ResponseWriter, r *http.Request) {
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+	cursor, _ := config.DB.Collection("students").Find(context.TODO(), bson.M{})
 
-	cursor, err := config.DB.Collection("students").Find(ctx, bson.M{})
-	if err != nil {
-		http.Error(w, "Error fetching data", 500)
-		return
-	}
-
-	var students []models.Student
-	cursor.All(ctx, &students)
+	var students []bson.M
+	cursor.All(context.TODO(), &students)
 
 	json.NewEncoder(w).Encode(students)
 }
 
-// ❌ Delete Student
+// Get Full Student (JOIN)
+func GetStudentFull(w http.ResponseWriter, r *http.Request) {
+
+	id := mux.Vars(r)["id"]
+	objID, _ := primitive.ObjectIDFromHex(id)
+
+	pipeline := bson.A{
+
+		// student select 
+		bson.M{"$match": bson.M{"_id": objID}},
+
+		// class
+		bson.M{"$lookup": bson.M{
+			"from": "classes",
+			"localField": "class_id",
+			"foreignField": "_id",
+			"as": "class",
+		}},
+
+		// subjects
+		bson.M{"$lookup": bson.M{
+			"from": "subjects",
+			"localField": "class_id",
+			"foreignField": "class_id",
+			"as": "subjects",
+		}},
+
+		// attendance 
+		bson.M{"$lookup": bson.M{
+			"from": "attendance",
+			"localField": "_id",
+			"foreignField": "student_id",
+			"as": "attendance",
+		}},
+
+		// marks 
+		bson.M{"$lookup": bson.M{
+			"from": "marks",
+			"localField": "_id",
+			"foreignField": "student_id",
+			"as": "marks",
+		}},
+
+		// exam 
+
+		bson.M{"$lookup": bson.M{
+			"from": "timetable",
+			"localField": "class_id",
+			"foreignField": "class_id",
+			"as": "timetable",
+		}},
+
+
+		// fees
+		bson.M{"$lookup": bson.M{
+			"from": "fees",
+			"localField": "_id",
+			"foreignField": "student_id",
+			"as": "fees",
+		}},
+
+		// books 
+		bson.M{"$lookup": bson.M{
+			"from": "books",
+			"localField": "class_id",
+			"foreignField": "class",
+			"as": "books",
+		}},
+
+		//  Parent
+		bson.M{"$lookup": bson.M{
+			"from": "parents",
+			"localField": "parent_id",
+			"foreignField": "_id",
+			"as": "parent",
+		}},
+
+		//  Assignments
+		bson.M{"$lookup": bson.M{
+			"from": "assignments",
+			"localField": "class_id",
+			"foreignField": "class_id",
+			"as": "assignments",
+		}},
+
+		//  Submissions
+		bson.M{"$lookup": bson.M{
+			"from": "submissions",
+			"localField": "_id",
+			"foreignField": "student_id",
+			"as": "submissions",
+		}},
+	}
+
+	cursor, _ := config.DB.Collection("students").Aggregate(context.TODO(), pipeline)
+
+	var result []bson.M
+	cursor.All(context.TODO(), &result)
+
+	json.NewEncoder(w).Encode(result)
+}
+
+//  Update Student
+func UpdateStudent(w http.ResponseWriter, r *http.Request) {
+
+	// take id from URL 
+	id := mux.Vars(r)["id"]
+
+	// objectid convert 
+	objID, _ := primitive.ObjectIDFromHex(id)
+
+	// take data from body 
+	var update bson.M
+	json.NewDecoder(r.Body).Decode(&update)
+
+	// add updateAt 
+	update["updatedAt"] = time.Now()
+
+	// mongodb update 
+	config.DB.Collection("students").UpdateOne(
+		context.TODO(),
+		bson.M{"_id": objID},
+		bson.M{"$set": update},
+	)
+
+
+	// response 
+	json.NewEncoder(w).Encode("Updated")
+}
+
+//  Delete Student (Soft Delete)
 func DeleteStudent(w http.ResponseWriter, r *http.Request) {
 
-	params := mux.Vars(r)
-	id := params["id"]
+	id := mux.Vars(r)["id"]
+	objID, _ := primitive.ObjectIDFromHex(id)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+	now := time.Now()
 
-	config.DB.Collection("students").DeleteOne(ctx, bson.M{"_id": id})
+	config.DB.Collection("students").UpdateOne(
+		context.TODO(),
+		bson.M{"_id": objID},
+		bson.M{"$set": bson.M{"deletedAt": now}},
+	)
 
-	json.NewEncoder(w).Encode(map[string]string{"message": "Deleted"})
+	json.NewEncoder(w).Encode("Deleted")
 }

@@ -4,29 +4,25 @@ import (
 	"os"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v5"
 )
 
-// secure JWT (best to import os )
-var SECRET_KEY = []byte(os.Getenv("JWT_SECRET"))
-
-
-
-func GenerateToken(userId string, role string) (string, error) {
-
+// Generate Token
+func GenerateJWT(userID string, role string) (string, error) {
 	claims := jwt.MapClaims{
-		"userId": userId,
-		"role":   role,
-		"exp":    time.Now().Add(time.Hour * 24).Unix(), // token expire in 24 hours for security //
+		"user_id": userID,
+		"role":    role,
+		"exp":     time.Now().Add(time.Hour * 24).Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	return token.SignedString(SECRET_KEY)
+	return token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 }
 
-func VerifyToken(tokenString string) (*jwt.Token, error) {
-	return jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		return SECRET_KEY, nil
+//  Verify Token (function)
+func VerifyToken(tokenStr string) (*jwt.Token, error) {
+
+	return jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+		return []byte(os.Getenv("JWT_SECRET")), nil
 	})
 }
