@@ -1,9 +1,10 @@
 package middleware
 
 import (
+	"context"
 	"net/http"
 	"strings"
-
+"github.com/golang-jwt/jwt/v5"
 	"school/utils"
 )
 
@@ -18,14 +19,24 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		}
 
 		parts := strings.Split(authHeader, " ")
-		token := parts[1]
+		tokenStr := parts[1]
 
-		_, err := utils.VerifyToken(token)
-		if err != nil {
+		token, err := utils.VerifyToken(tokenStr)
+		if err != nil || !token.Valid {
 			http.Error(w, "Invalid token", http.StatusUnauthorized)
 			return
 		}
 
-		next.ServeHTTP(w, r)
-	})
+	//  FIX HERE
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		http.Error(w, "Invalid claims", http.StatusUnauthorized)
+		return
+	}
+// store role in request context 
+	ctx := context.WithValue(r.Context(), "user_id", claims["user_id"])
+	ctx = context.WithValue(ctx, "role", claims["role"])
+
+	next.ServeHTTP(w, r.WithContext(ctx))
+})
 }

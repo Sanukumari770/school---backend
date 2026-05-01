@@ -64,4 +64,39 @@ protected.HandleFunc("/exam", controllers.CreateExam).Methods("POST")
 
 // Marks
 protected.HandleFunc("/marks", controllers.AddMarks).Methods("POST")
+
+// Parent APIs
+protected.HandleFunc("/parent", controllers.CreateParent).Methods("POST")
+protected.HandleFunc("/parents", controllers.GetParents).Methods("GET")
+protected.Handle(
+	"/parent/{id}",
+	middleware.Authorize("parent")(http.HandlerFunc(controllers.GetParentFull)),
+).Methods("GET")
+
+protected.HandleFunc("/parent/{id}", controllers.UpdateParent).Methods("PUT")
+protected.HandleFunc("/parent/{id}", controllers.DeleteParent).Methods("DELETE")
+
+
+
+// Parent protected
+parentRouter := r.PathPrefix("/parent").Subrouter()
+parentRouter.Use(middleware.AuthMiddleware)
+parentRouter.Use(middleware.Authorize("parent"))
+parentRouter.HandleFunc("/dashboard/{id}", controllers.GetParentDashboard).Methods("GET")
+
+//------------ Role based acces control  middleware ------------------
+// Admin only
+protected.Handle("/teacher", middleware.Authorize("admin")(http.HandlerFunc(controllers.AddTeacher))).Methods("POST")
+
+// Teacher only
+protected.Handle("/attendance", middleware.Authorize("teacher")(http.HandlerFunc(controllers.AddAttendance))).Methods("POST")
+
+// Parent only
+protected.Handle("/parent/{id}", middleware.Authorize("parent")(http.HandlerFunc(controllers.GetParentFull))).Methods("GET")
+
+// dashboard parents 
+protected.Handle(
+	"/parent/dashboard",
+	middleware.Authorize("parent")(http.HandlerFunc(controllers.GetParentDashboard)),
+).Methods("GET")
 }

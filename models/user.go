@@ -8,4 +8,5 @@ type User struct {
 	Email    string             `bson:"email"`
 	Password string             `bson:"password"`// enter password 
 	Role     string             `bson:"role"` // admin, student, teacher, parent
+	ParentID *primitive.ObjectID `bson:"parent_id,omitempty"` // connect user to parents 
 }

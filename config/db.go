@@ -18,14 +18,16 @@ func ConnectDB() {
 
 // change this line for securing data (mongoDB URI ) //
 	uri := os.Getenv("MONGO_URI") 
-//------------------------------------------//
+	if uri == "" {
+		log.Fatal("MONGO_URI not found in .env")
+	}
 
 	// create context 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	// connect using latest method of mongo db 
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))
+	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(os.Getenv("MONGO_URI")))
 	if err != nil {
 		log.Fatal("DB Error:", err)
 	}

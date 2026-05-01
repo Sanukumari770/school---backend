@@ -10,7 +10,7 @@ type Admission struct {
 
 	ApplicationNo string `bson:"applicationNo" json:"applicationNo"`
 
-	// 🔗 relation
+	//  relation
 	ParentID primitive.ObjectID `bson:"parentId" json:"parentId"`
 	ClassID  primitive.ObjectID `bson:"classId" json:"classId"`
 
