@@ -1,11 +1,17 @@
 package models
 
-import "go.mongodb.org/mongo-driver/bson/primitive"
+import (
+	"time"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
 
 type Submission struct {
 	ID           primitive.ObjectID `bson:"_id,omitempty"`
-	AssignmentID string             `json:"assignmentId"`
-	StudentID    string             `json:"studentId"`
-	FileURL      string             `json:"fileUrl"`
-	Marks        int                `json:"marks"`
+	AssignmentID primitive.ObjectID `bson:"assignment_id"`
+	StudentID    primitive.ObjectID `bson:"student_id"`
+
+	FileURL string `bson:"file_url"`
+	Marks   int    `bson:"marks"`
+
+	SubmittedAt time.Time `bson:"submittedAt"`
 }

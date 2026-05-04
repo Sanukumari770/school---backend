@@ -30,10 +30,6 @@ func SetupRoutes(r *mux.Router) {
 	protected.HandleFunc("/student/{id}", controllers.UpdateStudent).Methods("PUT")
 	protected.HandleFunc("/student/{id}", controllers.DeleteStudent).Methods("DELETE")
 	
-	// Class
-protected.HandleFunc("/class", controllers.AddClass).Methods("POST")
-protected.HandleFunc("/class", controllers.GetClasses).Methods("GET")
-
 	// Fees
 protected.HandleFunc("/fee/create", controllers.CreateFee).Methods("POST")
 protected.HandleFunc("/fee/pay", controllers.PayFee).Methods("POST")
@@ -103,4 +99,17 @@ protected.HandleFunc("/teacher/dashboard/{id}", controllers.GetTeacherDashboard)
 // SALARY
 protected.HandleFunc("/salary", controllers.AddSalary).Methods("POST")
 protected.HandleFunc("/salary/{teacherId}", controllers.GetSalaryByTeacher).Methods("GET")
+
+// CLASS
+protected.HandleFunc("/class", controllers.AddClass).Methods("POST")
+protected.HandleFunc("/classes", controllers.GetClasses).Methods("GET")
+
+// SUBJECT
+protected.HandleFunc("/subject", controllers.AddSubject).Methods("POST")
+
+// ASSIGNMENT
+protected.HandleFunc("/assignment", controllers.CreateAssignment).Methods("POST")
+
+// SUBMISSION
+protected.HandleFunc("/submit", controllers.SubmitAssignment).Methods("POST")
 }
