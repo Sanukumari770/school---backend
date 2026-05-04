@@ -30,13 +30,6 @@ func SetupRoutes(r *mux.Router) {
 	protected.HandleFunc("/student/{id}", controllers.UpdateStudent).Methods("PUT")
 	protected.HandleFunc("/student/{id}", controllers.DeleteStudent).Methods("DELETE")
 	
-
-	// Teacher
-protected.HandleFunc("/teacher", controllers.AddTeacher).Methods("POST")
-protected.HandleFunc("/teachers", controllers.GetTeachers).Methods("GET")
-protected.HandleFunc("/teacher/{id}", controllers.GetTeacherFull).Methods("GET")
-protected.HandleFunc("/teacher/{id}", controllers.UpdateTeacher).Methods("PUT")
-protected.HandleFunc("/teacher/{id}", controllers.DeleteTeacher).Methods("DELETE")
 	// Class
 protected.HandleFunc("/class", controllers.AddClass).Methods("POST")
 protected.HandleFunc("/class", controllers.GetClasses).Methods("GET")
@@ -99,4 +92,15 @@ protected.Handle(
 	"/parent/dashboard",
 	middleware.Authorize("parent")(http.HandlerFunc(controllers.GetParentDashboard)),
 ).Methods("GET")
+// TEACHER MODULE
+protected.HandleFunc("/teacher", controllers.AddTeacher).Methods("POST")
+protected.HandleFunc("/teachers", controllers.GetTeachers).Methods("GET")
+protected.HandleFunc("/teacher/{id}", controllers.GetTeacherFull).Methods("GET")
+protected.HandleFunc("/teacher/{id}", controllers.UpdateTeacher).Methods("PUT")
+protected.HandleFunc("/teacher/{id}", controllers.DeleteTeacher).Methods("DELETE")
+protected.HandleFunc("/teacher/dashboard/{id}", controllers.GetTeacherDashboard).Methods("GET")
+
+// SALARY
+protected.HandleFunc("/salary", controllers.AddSalary).Methods("POST")
+protected.HandleFunc("/salary/{teacherId}", controllers.GetSalaryByTeacher).Methods("GET")
 }

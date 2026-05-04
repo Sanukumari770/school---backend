@@ -16,11 +16,30 @@ import (
 
 //  Create Student
 func CreateStudent(w http.ResponseWriter, r *http.Request) {
-	var student models.Student
-	json.NewDecoder(r.Body).Decode(&student)
 
-	student.CreatedAt = time.Now()
-	student.UpdatedAt = time.Now()
+	var input map[string]interface{}
+	json.NewDecoder(r.Body).Decode(&input)
+
+	classIDHex := input["class_id"].(string)
+
+	classID, err := primitive.ObjectIDFromHex(classIDHex)
+	if err != nil {
+		http.Error(w, "Invalid class_id", 400)
+		return
+	}
+
+	student := models.Student{
+		ID:        primitive.NewObjectID(),
+		Name:      input["name"].(string),
+		ClassID:   classID,
+		Class: input["class_name"].(string),
+		Section:   input["section"].(string),
+		RollNo:    input["roll_no"].(string),
+		Email:     input["email"].(string),
+		Phone:     input["phone"].(string),
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
 
 	res, err := config.DB.Collection("students").InsertOne(context.TODO(), student)
 	if err != nil {

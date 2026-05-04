@@ -9,11 +9,14 @@ type Student struct {
 	ID       primitive.ObjectID `bson:"_id,omitempty"`
 	Name     string             `bson:"name"`
 	ClassID  primitive.ObjectID `bson:"class_id"`
-	RollNo   string             `bson:"roll_no"`
-	Email    string             `bson:"email"`
-	Phone    string             `bson:"phone"`
+	RollNo   string      `bson:"roll_no"`
+	Email    string    `bson:"email"`
+	Phone    string    `bson:"phone"`
+	Class    string     `bson:"class"`     //  add
+	Section  string    `bson:"section"`   //  add
+CreatedAt time.Time  `bson:"createdAt"`
+ParentID  primitive.ObjectID `bson:"parent_id,omitempty"`
 
-	CreatedAt time.Time  `bson:"createdAt"`
 	UpdatedAt time.Time  `bson:"updatedAt"`
 	DeletedAt *time.Time `bson:"deletedAt,omitempty"`
 }

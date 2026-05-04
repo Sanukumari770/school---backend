@@ -1,38 +1,36 @@
 package main
 
 import (
-"log"
-"net/http"
-"os"
-"school/config"
-"school/routes"
-"github.com/gorilla/mux"
-"github.com/joho/godotenv"
-"github.com/rs/cors"
+	"log"
+	"net/http"
+	"os"
+
+	"school/config"
+	"school/routes"
+
+	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
+	"github.com/rs/cors"
 )
+
 func main() {
 
-	//  Load .env
+	// Load env
 	err := godotenv.Load(".env")
 	if err != nil {
 		log.Println("No .env file found")
 	}
 
-	//  Debug env
-	log.Println("MONGO_URI:", os.Getenv("MONGO_URI"))
-
-	//  Connect DB
+	// Connect DB
 	config.ConnectDB()
 
-	//  Router
+	// Router
 	r := mux.NewRouter()
-	r.Use(mux.CORSMethodMiddleware(r))
 
-	//  Routes
+	// Routes
 	routes.SetupRoutes(r)
-	routes.AdmissionRoutes(r)
 
-	// CORS setup
+	// CORS
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{
 			"http://localhost:5173",
@@ -49,13 +47,15 @@ func main() {
 		AllowCredentials: true,
 	})
 
-handler := c.Handler(r)
+	handler := c.Handler(r)
 
-	//  Port
+	// Port
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
-log.Println("Server running on port", port)
-log.Fatal(http.ListenAndServe(":"+port, handler))
+
+	log.Println("Server running on port", port)
+
+	log.Fatal(http.ListenAndServe(":"+port, handler))
 }

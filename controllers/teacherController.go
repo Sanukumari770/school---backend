@@ -1,21 +1,24 @@
-// join teacher to relate with class , subject, assigment, attendance, payroll 
-
 package controllers
 
 import (
-"context"
-"encoding/json"
-"net/http"
-"time"
-"school/config"
-"school/models"
-"github.com/gorilla/mux"
-"go.mongodb.org/mongo-driver/mongo"
-"go.mongodb.org/mongo-driver/bson"
-"go.mongodb.org/mongo-driver/bson/primitive"
+	"context"
+	"encoding/json"
+	"net/http"
+	"time"
+
+	"school/config"
+	"school/models"
+
+	"github.com/gorilla/mux"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-//  Create Teacher (Admin use)
+
+// =======================
+// ✅ ADD TEACHER
+// =======================
 func AddTeacher(w http.ResponseWriter, r *http.Request) {
 
 	var teacher models.Teacher
@@ -33,7 +36,10 @@ func AddTeacher(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
-//  Get All Teachers
+
+// =======================
+// ✅ GET ALL TEACHERS
+// =======================
 func GetTeachers(w http.ResponseWriter, r *http.Request) {
 
 	cursor, err := config.DB.Collection("teachers").Find(context.TODO(), bson.M{})
@@ -48,47 +54,38 @@ func GetTeachers(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(teachers)
 }
 
-// get single teacher full join data 
+
+// =======================
+// ✅ FULL JOIN DATA
+// =======================
 func GetTeacherFull(w http.ResponseWriter, r *http.Request) {
 
-	// from URL to find  teacher ID 
 	id := mux.Vars(r)["id"]
-	teacherID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		http.Error(w, "Invalid ID", 400)
-		return
-	}
+	teacherID, _ := primitive.ObjectIDFromHex(id)
 
-	// Aggregation Pipeline (JOIN SYSTEM)
 	pipeline := mongo.Pipeline{
 
-		// teacher match
-		bson.D{{Key: "$match", Value: bson.D{
-			{Key: "_id", Value: teacherID},
+		{{Key: "$match", Value: bson.M{"_id": teacherID}}},
+
+		{{Key: "$lookup", Value: bson.M{
+			"from": "subjects",
+			"localField": "_id",
+			"foreignField": "teacher_id",
+			"as": "subjects",
 		}}},
 
-		// subjects (teacher which subject teaches )
-		bson.D{{Key: "$lookup", Value: bson.D{
-			{Key: "from", Value: "subjects"},
-			{Key: "localField", Value: "_id"},
-			{Key: "foreignField", Value: "teacher_id"},
-			{Key: "as", Value: "subjects"},
+		{{Key: "$lookup", Value: bson.M{
+			"from": "classes",
+			"localField": "classes",
+			"foreignField": "_id",
+			"as": "classes",
 		}}},
 
-		//classes (teacher which classes teach)
-		bson.D{{Key: "$lookup", Value: bson.D{
-			{Key: "from", Value: "classes"},
-			{Key: "localField", Value: "classes"},
-			{Key: "foreignField", Value: "_id"},
-			{Key: "as", Value: "classes"},
-		}}},
-
-		// timetable for classes 
-		bson.D{{Key: "$lookup", Value: bson.D{
-			{Key: "from", Value: "timetable"},
-			{Key: "localField", Value: "_id"},
-			{Key: "foreignField", Value: "teacher_id"},
-			{Key: "as", Value: "timetable"},
+		{{Key: "$lookup", Value: bson.M{
+			"from": "timetable",
+			"localField": "_id",
+			"foreignField": "teacher_id",
+			"as": "timetable",
 		}}},
 
 		// attendance (teacher marks attendance of student )
@@ -99,6 +96,21 @@ func GetTeacherFull(w http.ResponseWriter, r *http.Request) {
 			{Key: "as", Value: "attendance"},
 		}}},
 
+		//exams
+		bson.D{{Key: "$lookup", Value: bson.D{
+			{Key: "from", Value: "exams"},
+			{Key: "localField", Value: "_id"},
+			{Key: "foreignField", Value: "teacher_id"},
+			{Key: "as", Value: "exams"},
+		}}},
+
+		// payroll 
+		{{Key: "$lookup", Value: bson.M{
+			"from": "payroll",
+			"localField": "_id",
+			"foreignField": "teacher_id",
+			"as": "payroll",
+		}}},
 		//exams
 		bson.D{{Key: "$lookup", Value: bson.D{
 			{Key: "from", Value: "exams"},
@@ -122,35 +134,24 @@ func GetTeacherFull(w http.ResponseWriter, r *http.Request) {
 			{Key: "foreignField", Value: "teacher_id"},
 			{Key: "as", Value: "events"},
 		}}},
-
-		// payroll
-		bson.D{{Key: "$lookup", Value: bson.D{
-			{Key: "from", Value: "payroll"},
-			{Key: "localField", Value: "_id"},
-			{Key: "foreignField", Value: "teacher_id"},
-			{Key: "as", Value: "payroll"},
-		}}},
 	}
 
-	//  aggregation run 
 	cursor, err := config.DB.Collection("teachers").Aggregate(context.TODO(), pipeline)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
 	}
 
-	//  result decode
 	var result []bson.M
-	if err := cursor.All(context.TODO(), &result); err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
+	cursor.All(context.TODO(), &result)
 
-	// response
 	json.NewEncoder(w).Encode(result)
 }
 
-// Update Teacher
+
+// =======================
+// ✅ UPDATE TEACHER
+// =======================
 func UpdateTeacher(w http.ResponseWriter, r *http.Request) {
 
 	id := mux.Vars(r)["id"]
@@ -161,14 +162,10 @@ func UpdateTeacher(w http.ResponseWriter, r *http.Request) {
 
 	teacher.UpdatedAt = time.Now()
 
-	update := bson.M{
-		"$set": teacher,
-	}
-
 	_, err := config.DB.Collection("teachers").UpdateOne(
 		context.TODO(),
 		bson.M{"_id": objID},
-		update,
+		bson.M{"$set": teacher},
 	)
 
 	if err != nil {
@@ -179,7 +176,10 @@ func UpdateTeacher(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode("Updated")
 }
 
-// Delete Teacher (Soft Delete)
+
+// =======================
+// ✅ DELETE (SOFT)
+// =======================
 func DeleteTeacher(w http.ResponseWriter, r *http.Request) {
 
 	id := mux.Vars(r)["id"]
@@ -199,4 +199,93 @@ func DeleteTeacher(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode("Deleted")
+}
+
+
+// =======================
+// ✅ DASHBOARD API
+// =======================
+func GetTeacherDashboard(w http.ResponseWriter, r *http.Request) {
+
+	id := mux.Vars(r)["id"]
+	teacherID, _ := primitive.ObjectIDFromHex(id)
+
+	pipeline := mongo.Pipeline{
+
+		{{Key: "$match", Value: bson.M{"_id": teacherID}}},
+
+		{{Key: "$lookup", Value: bson.M{
+			"from": "payroll",
+			"localField": "_id",
+			"foreignField": "teacher_id",
+			"as": "payroll",
+		}}},
+
+		{{Key: "$lookup", Value: bson.M{
+			"from": "classes",
+			"localField": "classes",
+			"foreignField": "_id",
+			"as": "classes",
+		}}},
+	}
+
+	cursor, _ := config.DB.Collection("teachers").Aggregate(context.TODO(), pipeline)
+
+	var result []bson.M
+	cursor.All(context.TODO(), &result)
+
+	json.NewEncoder(w).Encode(result)
+}
+
+
+// =======================
+// ✅ ADD SALARY
+// =======================
+func AddSalary(w http.ResponseWriter, r *http.Request) {
+
+	var input struct {
+		TeacherID string  `json:"teacher_id"`
+		Salary    float64 `json:"salary"`
+		Bonus     float64 `json:"bonus"`
+		Deduction float64 `json:"deduction"`
+		Month     string  `json:"month"`
+	}
+
+	json.NewDecoder(r.Body).Decode(&input)
+
+	teacherID, _ := primitive.ObjectIDFromHex(input.TeacherID)
+
+	data := models.Payroll{
+		ID:        primitive.NewObjectID(),
+		TeacherID: teacherID,
+		Salary:    input.Salary,
+		Bonus:     input.Bonus,
+		Deduction: input.Deduction,
+		Month:     input.Month,
+		CreatedAt: time.Now(),
+	}
+
+	config.DB.Collection("payroll").InsertOne(context.TODO(), data)
+
+	json.NewEncoder(w).Encode("Salary Added")
+}
+
+
+// =======================
+// ✅ GET SALARY
+// =======================
+func GetSalaryByTeacher(w http.ResponseWriter, r *http.Request) {
+
+	id := mux.Vars(r)["teacherId"]
+	teacherID, _ := primitive.ObjectIDFromHex(id)
+
+	cursor, _ := config.DB.Collection("payroll").Find(
+		context.TODO(),
+		bson.M{"teacher_id": teacherID},
+	)
+
+	var result []models.Payroll
+	cursor.All(context.TODO(), &result)
+
+	json.NewEncoder(w).Encode(result)
 }
