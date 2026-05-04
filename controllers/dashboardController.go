@@ -6,6 +6,7 @@ import (
 	"net/http"
 "school/config"
 "go.mongodb.org/mongo-driver/bson"
+"go.mongodb.org/mongo-driver/mongo" 
 )
 
 // Dashboard
@@ -26,4 +27,37 @@ func GetDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(response)
+}
+
+func GetSchoolFullData(w http.ResponseWriter, r *http.Request) {
+
+	pipeline := mongo.Pipeline{
+		bson.D{
+			{Key: "$lookup", Value: bson.M{
+				"from": "students",
+				"localField": "_id",
+				"foreignField": "class_id",
+				"as": "students",
+			}},
+		},
+		bson.D{
+			{Key: "$lookup", Value: bson.M{
+				"from": "subjects",
+				"localField": "_id",
+				"foreignField": "class_id",
+				"as": "subjects",
+			}},
+		},
+	}
+
+	cursor, err := config.DB.Collection("classes").Aggregate(context.TODO(), pipeline)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	var result []bson.M
+	cursor.All(context.TODO(), &result)
+
+	json.NewEncoder(w).Encode(result)
 }

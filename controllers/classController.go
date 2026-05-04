@@ -11,19 +11,35 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 )
+func AddMultipleClasses(w http.ResponseWriter, r *http.Request) {
 
-func AddClass(w http.ResponseWriter, r *http.Request) {
+	var classes []models.Class
 
-	var class models.Class
-	json.NewDecoder(r.Body).Decode(&class)
+	err := json.NewDecoder(r.Body).Decode(&classes)
+	if err != nil {
+		http.Error(w, "Invalid JSON", 400)
+		return
+	}
 
-	class.CreatedAt = time.Now()
-	class.UpdatedAt = time.Now()
+	for i := range classes {
+		classes[i].CreatedAt = time.Now()
+		classes[i].UpdatedAt = time.Now()
+	}
 
-	res, _ := config.DB.Collection("classes").InsertOne(context.TODO(), class)
+	var docs []interface{}
+	for _, c := range classes {
+		docs = append(docs, c)
+	}
+
+	res, err := config.DB.Collection("classes").InsertMany(context.TODO(), docs)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
 
 	json.NewEncoder(w).Encode(res)
 }
+
 
 func GetClasses(w http.ResponseWriter, r *http.Request) {
 

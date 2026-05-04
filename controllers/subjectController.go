@@ -12,9 +12,9 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func AddSubject(w http.ResponseWriter, r *http.Request) {
+func AddMultipleSubjects(w http.ResponseWriter, r *http.Request) {
 
-	var input struct {
+	var input []struct {
 		Name      string `json:"name"`
 		ClassID   string `json:"class_id"`
 		TeacherID string `json:"teacher_id"`
@@ -22,18 +22,25 @@ func AddSubject(w http.ResponseWriter, r *http.Request) {
 
 	json.NewDecoder(r.Body).Decode(&input)
 
-	classID, _ := primitive.ObjectIDFromHex(input.ClassID)
-	teacherID, _ := primitive.ObjectIDFromHex(input.TeacherID)
+	var docs []interface{}
 
-	data := models.Subject{
-		Name:      input.Name,
-		ClassID:   classID,
-		TeacherID: teacherID,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+	for _, s := range input {
+
+		classID, _ := primitive.ObjectIDFromHex(s.ClassID)
+		teacherID, _ := primitive.ObjectIDFromHex(s.TeacherID)
+
+		data := models.Subject{
+			Name:      s.Name,
+			ClassID:   classID,
+			TeacherID: teacherID,
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		}
+
+		docs = append(docs, data)
 	}
 
-	res, _ := config.DB.Collection("subjects").InsertOne(context.TODO(), data)
+	res, _ := config.DB.Collection("subjects").InsertMany(context.TODO(), docs)
 
 	json.NewEncoder(w).Encode(res)
 }

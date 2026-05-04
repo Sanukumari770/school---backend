@@ -25,7 +25,7 @@ func SetupRoutes(r *mux.Router) {
 	// Student
 	
 	protected.HandleFunc("/students", controllers.GetStudents).Methods("GET")
-	protected.HandleFunc("/student", controllers.CreateStudent).Methods("POST")
+	protected.HandleFunc("/students/bulk", controllers.AddMultipleStudents).Methods("POST")
 	protected.HandleFunc("/student/{id}", controllers.GetStudentFull).Methods("GET")
 	protected.HandleFunc("/student/{id}", controllers.UpdateStudent).Methods("PUT")
 	protected.HandleFunc("/student/{id}", controllers.DeleteStudent).Methods("DELETE")
@@ -89,26 +89,31 @@ protected.Handle(
 	middleware.Authorize("parent")(http.HandlerFunc(controllers.GetParentDashboard)),
 ).Methods("GET")
 // TEACHER MODULE
-protected.HandleFunc("/teacher", controllers.AddTeacher).Methods("POST")
-protected.HandleFunc("/teachers", controllers.GetTeachers).Methods("GET")
-protected.HandleFunc("/teacher/{id}", controllers.GetTeacherFull).Methods("GET")
-protected.HandleFunc("/teacher/{id}", controllers.UpdateTeacher).Methods("PUT")
-protected.HandleFunc("/teacher/{id}", controllers.DeleteTeacher).Methods("DELETE")
-protected.HandleFunc("/teacher/dashboard/{id}", controllers.GetTeacherDashboard).Methods("GET")
+protected.Handle("/teacher",
+		middleware.Authorize("admin")(http.HandlerFunc(controllers.AddTeacher)),
+	).Methods("POST")
+
+	protected.HandleFunc("/teachers", controllers.GetTeachers).Methods("GET")
+	protected.HandleFunc("/teachers/bulk", controllers.AddMultipleTeachers).Methods("POST")
+
+	protected.HandleFunc("/teacher/{id}", controllers.GetTeacherFull).Methods("GET")
+	protected.HandleFunc("/teacher/{id}", controllers.UpdateTeacher).Methods("PUT")
+	protected.HandleFunc("/teacher/{id}", controllers.DeleteTeacher).Methods("DELETE")
+
 
 // SALARY
 protected.HandleFunc("/salary", controllers.AddSalary).Methods("POST")
 protected.HandleFunc("/salary/{teacherId}", controllers.GetSalaryByTeacher).Methods("GET")
 
 // CLASS
-protected.HandleFunc("/class", controllers.AddClass).Methods("POST")
+protected.HandleFunc("/classes/bulk", controllers.AddMultipleClasses).Methods("POST")
 protected.HandleFunc("/classes", controllers.GetClasses).Methods("GET")
 
-// SUBJECT
-protected.HandleFunc("/subject", controllers.AddSubject).Methods("POST")
+
 
 // ASSIGNMENT
 protected.HandleFunc("/assignment", controllers.CreateAssignment).Methods("POST")
+protected.HandleFunc("/submit", controllers.SubmitAssignment).Methods("POST")
 
 // SUBMISSION
 protected.HandleFunc("/submit", controllers.SubmitAssignment).Methods("POST")

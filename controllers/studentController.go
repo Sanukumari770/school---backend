@@ -1,66 +1,70 @@
+
 package controllers
-
 import (
-	"context"
-	"encoding/json"
-	"net/http"
-	"time"
-
-	"school/config"
-	"school/models"
-
-	"github.com/gorilla/mux"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+"context"
+"encoding/json"
+"net/http"
+"time"
+"school/config"
+"school/models"
+"github.com/gorilla/mux"
+"go.mongodb.org/mongo-driver/bson"
+"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 //  Create Student
-func CreateStudent(w http.ResponseWriter, r *http.Request) {
+func AddMultipleStudents(w http.ResponseWriter, r *http.Request) {
 
-	var input map[string]interface{}
+	var input []struct {
+		Name    string `json:"name"`
+		ClassID string `json:"class_id"`
+		RollNo  string `json:"roll_no"`
+		Class   string `json:"class"`
+		Section string `json:"section"`
+		Email   string `json:"email"`
+		Phone   string `json:"phone"`
+	}
+
 	json.NewDecoder(r.Body).Decode(&input)
 
-	classIDHex := input["class_id"].(string)
+	var docs []interface{}
 
-	classID, err := primitive.ObjectIDFromHex(classIDHex)
-	if err != nil {
-		http.Error(w, "Invalid class_id", 400)
-		return
+	for _, s := range input {
+
+		classID, _ := primitive.ObjectIDFromHex(s.ClassID)
+
+		data := models.Student{
+			Name:      s.Name,
+			ClassID:   classID,
+			RollNo:    s.RollNo,
+			Class:     s.Class,
+			Section:   s.Section,
+			Email:     s.Email,
+			Phone:     s.Phone,
+			CreatedAt: time.Now(),
+		}
+
+		docs = append(docs, data)
 	}
 
-	student := models.Student{
-		ID:        primitive.NewObjectID(),
-		Name:      input["name"].(string),
-		ClassID:   classID,
-		Class: input["class_name"].(string),
-		Section:   input["section"].(string),
-		RollNo:    input["roll_no"].(string),
-		Email:     input["email"].(string),
-		Phone:     input["phone"].(string),
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	}
+	res, _ := config.DB.Collection("students").InsertMany(context.TODO(), docs)
 
-	res, err := config.DB.Collection("students").InsertOne(context.TODO(), student)
+	json.NewEncoder(w).Encode(res)
+}
+
+func GetStudents(w http.ResponseWriter, r *http.Request) {
+
+	cursor, err := config.DB.Collection("students").Find(context.TODO(), bson.M{})
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
 	}
 
-	json.NewEncoder(w).Encode(res)
-}
-
-//  Get All Students
-func GetStudents(w http.ResponseWriter, r *http.Request) {
-
-	cursor, _ := config.DB.Collection("students").Find(context.TODO(), bson.M{})
-
-	var students []bson.M
+	var students []models.Student
 	cursor.All(context.TODO(), &students)
 
 	json.NewEncoder(w).Encode(students)
 }
-
 // Get Full Student (JOIN)
 func GetStudentFull(w http.ResponseWriter, r *http.Request) {
 
