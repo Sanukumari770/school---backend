@@ -9,8 +9,15 @@ import (
 	"school/config"
 	"school/models"
 
+	"github.com/gorilla/mux"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
+
+
+// =======================
+// ✅ ADD SALARY
+// =======================
 func AddSalary(w http.ResponseWriter, r *http.Request) {
 
 	var input struct {
@@ -49,58 +56,34 @@ func AddSalary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]string{
-		"message": "Salary Added Successfully",
-	})
+	json.NewEncoder(w).Encode("Salary Added")
 }
 
-	var input map[string]interface{}
-	json.NewDecoder(r.Body).Decode(&input)
 
-	teacherIDHex := input["teacher_id"].(string)
+// =======================
+// ✅ GET SALARY
+// =======================
+func GetSalaryByTeacher(w http.ResponseWriter, r *http.Request) {
 
-	teacherID, err := primitive.ObjectIDFromHex(teacherIDHex)
+	id := mux.Vars(r)["teacherId"]
+
+	teacherID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		http.Error(w, "Invalid teacher_id", 400)
+		http.Error(w, "Invalid ID", 400)
 		return
 	}
 
-	data := models.Payroll{
-		ID:        primitive.NewObjectID(),
-		TeacherID: teacherID,
-		Salary:    input["salary"].(float64),
-		Bonus:     input["bonus"].(float64),
-		Deduction: input["deduction"].(float64),
-		Month:     input["month"].(string),
-		CreatedAt: time.Now(),
-	}
-
-	_, err = config.DB.Collection("payroll").InsertOne(context.TODO(), data)
+	cursor, err := config.DB.Collection("payroll").Find(
+		context.TODO(),
+		bson.M{"teacher_id": teacherID},
+	)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
 	}
 
-	json.NewEncoder(w).Encode("Salary Added")
-// get salary
-	func GetSalaryByTeacher(w http.ResponseWriter, r *http.Request) {
+	var result []models.Payroll
+	cursor.All(context.TODO(), &result)
 
-		id := mux.Vars(r)["teacherId"]
-		teacherID, _ := primitive.ObjectIDFromHex(id)
-	
-		cursor, err := config.DB.Collection("payroll").Find(
-			context.TODO(),
-			bson.M{"teacher_id": teacherID},
-		)
-	
-		if err != nil {
-			http.Error(w, err.Error(), 500)
-			return
-		}
-	
-		var result []models.Payroll
-		cursor.All(context.TODO(), &result)
-	
-		json.NewEncoder(w).Encode(result)
-	
+	json.NewEncoder(w).Encode(result)
 }
