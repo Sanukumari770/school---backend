@@ -111,7 +111,7 @@ protected.HandleFunc("/classes", controllers.GetClasses).Methods("GET")
 
 
 
-// BULK ✅
+// BULK 
 protected.HandleFunc("/subjects/bulk", controllers.AddMultipleSubjects).Methods("POST")
 
 
