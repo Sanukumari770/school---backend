@@ -111,6 +111,10 @@ protected.HandleFunc("/classes", controllers.GetClasses).Methods("GET")
 
 
 
+// BULK ✅
+protected.HandleFunc("/subjects/bulk", controllers.AddMultipleSubjects).Methods("POST")
+
+
 // ASSIGNMENT
 protected.HandleFunc("/assignment", controllers.CreateAssignment).Methods("POST")
 protected.HandleFunc("/submit", controllers.SubmitAssignment).Methods("POST")

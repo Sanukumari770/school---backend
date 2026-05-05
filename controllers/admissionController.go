@@ -113,7 +113,7 @@ func ApproveAdmission(w http.ResponseWriter, r *http.Request) {
 	student := models.Student{
 		ID:        primitive.NewObjectID(),
 		Name:      admission.StudentName,
-		ClassID:   admission.ClassID,
+		ClassID:   &admission.ClassID,
 		Email:     admission.Email,
 		Phone:     admission.Phone,
 		CreatedAt: time.Now(),

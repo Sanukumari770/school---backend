@@ -1,18 +1,23 @@
-
 package controllers
+
 import (
-"context"
-"encoding/json"
-"net/http"
-"time"
-"school/config"
-"school/models"
-"github.com/gorilla/mux"
-"go.mongodb.org/mongo-driver/bson"
-"go.mongodb.org/mongo-driver/bson/primitive"
+	"context"
+	"encoding/json"
+	"net/http"
+	"time"
+
+	"school/config"
+	"school/models"
+
+	"github.com/gorilla/mux"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-//  Create Student
+
+// =======================
+// ADD MULTIPLE STUDENTS
+// =======================
 func AddMultipleStudents(w http.ResponseWriter, r *http.Request) {
 
 	var input []struct {
@@ -31,28 +36,44 @@ func AddMultipleStudents(w http.ResponseWriter, r *http.Request) {
 
 	for _, s := range input {
 
-		classID, _ := primitive.ObjectIDFromHex(s.ClassID)
+		classID, err := primitive.ObjectIDFromHex(s.ClassID)
+		if err != nil {
+			continue // ❌ invalid skip
+		}
 
 		data := models.Student{
 			Name:      s.Name,
-			ClassID:   classID,
+			ClassID:   &classID,
 			RollNo:    s.RollNo,
 			Class:     s.Class,
 			Section:   s.Section,
 			Email:     s.Email,
 			Phone:     s.Phone,
 			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
 		}
 
 		docs = append(docs, data)
 	}
 
-	res, _ := config.DB.Collection("students").InsertMany(context.TODO(), docs)
+	if len(docs) == 0 {
+		http.Error(w, "No valid students to insert", 400)
+		return
+	}
+
+	res, err := config.DB.Collection("students").InsertMany(context.TODO(), docs)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
 
 	json.NewEncoder(w).Encode(res)
 }
 
-// get students fetch data from create students 
+
+// =======================
+// GET STUDENTS (SAFE)
+// =======================
 func GetStudents(w http.ResponseWriter, r *http.Request) {
 
 	cursor, err := config.DB.Collection("students").Find(context.TODO(), bson.M{})
@@ -60,21 +81,32 @@ func GetStudents(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
+	defer cursor.Close(context.TODO())
 
 	var students []models.Student
 
-	if err := cursor.All(context.TODO(), &students); err != nil {
-		http.Error(w, err.Error(), 500)
-		return
+	for cursor.Next(context.TODO()) {
+		var s models.Student
+
+		// ❗ skip bad records (important fix)
+		if err := cursor.Decode(&s); err != nil {
+			continue
+		}
+
+		students = append(students, s)
 	}
 
 	if students == nil {
-		students = []models.Student{} // avoid null
+		students = []models.Student{}
 	}
 
 	json.NewEncoder(w).Encode(students)
 }
-// Get Full Student (JOIN)
+
+
+// =======================
+// GET FULL STUDENT (JOIN)
+// =======================
 func GetStudentFull(w http.ResponseWriter, r *http.Request) {
 
 	id := mux.Vars(r)["id"]
@@ -82,25 +114,21 @@ func GetStudentFull(w http.ResponseWriter, r *http.Request) {
 
 	pipeline := bson.A{
 
-		// student select 
 		bson.M{"$match": bson.M{"_id": objID}},
 
-		// class
 		bson.M{"$lookup": bson.M{
-			"from": "classes",
-			"localField": "class_id",
+			"from":         "classes",
+			"localField":   "class_id",
 			"foreignField": "_id",
-			"as": "class",
+			"as":           "class",
 		}},
 
-		// subjects
 		bson.M{"$lookup": bson.M{
-			"from": "subjects",
-			"localField": "class_id",
+			"from":         "subjects",
+			"localField":   "class_id",
 			"foreignField": "class_id",
-			"as": "subjects",
+			"as":           "subjects",
 		}},
-
 		// attendance 
 		bson.M{"$lookup": bson.M{
 			"from": "attendance",
@@ -176,35 +204,38 @@ func GetStudentFull(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(result)
 }
 
-//  Update Student
+
+// =======================
+// UPDATE STUDENT
+// =======================
 func UpdateStudent(w http.ResponseWriter, r *http.Request) {
 
-	// take id from URL 
 	id := mux.Vars(r)["id"]
-
-	// objectid convert 
 	objID, _ := primitive.ObjectIDFromHex(id)
 
-	// take data from body 
 	var update bson.M
 	json.NewDecoder(r.Body).Decode(&update)
 
-	// add updateAt 
 	update["updatedAt"] = time.Now()
 
-	// mongodb update 
-	config.DB.Collection("students").UpdateOne(
+	_, err := config.DB.Collection("students").UpdateOne(
 		context.TODO(),
 		bson.M{"_id": objID},
 		bson.M{"$set": update},
 	)
 
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
 
-	// response 
 	json.NewEncoder(w).Encode("Updated")
 }
 
-//  Delete Student (Soft Delete)
+
+// =======================
+// DELETE STUDENT (SOFT)
+// =======================
 func DeleteStudent(w http.ResponseWriter, r *http.Request) {
 
 	id := mux.Vars(r)["id"]
@@ -212,11 +243,16 @@ func DeleteStudent(w http.ResponseWriter, r *http.Request) {
 
 	now := time.Now()
 
-	config.DB.Collection("students").UpdateOne(
+	_, err := config.DB.Collection("students").UpdateOne(
 		context.TODO(),
 		bson.M{"_id": objID},
 		bson.M{"$set": bson.M{"deletedAt": now}},
 	)
+
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
 
 	json.NewEncoder(w).Encode("Deleted")
 }
