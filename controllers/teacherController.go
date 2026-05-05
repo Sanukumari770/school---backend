@@ -17,7 +17,7 @@ import (
 
 
 // =======================
-// ✅ ADD SINGLE TEACHER
+// ADD SINGLE TEACHER
 // =======================
 func AddTeacher(w http.ResponseWriter, r *http.Request) {
 
@@ -38,7 +38,7 @@ func AddTeacher(w http.ResponseWriter, r *http.Request) {
 
 
 // =======================
-// ✅ ADD MULTIPLE TEACHERS
+// ADD MULTIPLE TEACHERS
 // =======================
 func AddMultipleTeachers(w http.ResponseWriter, r *http.Request) {
 
@@ -64,7 +64,7 @@ func AddMultipleTeachers(w http.ResponseWriter, r *http.Request) {
 
 
 // =======================
-// ✅ GET ALL TEACHERS
+//  GET ALL TEACHERS
 // =======================
 func GetTeachers(w http.ResponseWriter, r *http.Request) {
 
@@ -82,7 +82,7 @@ func GetTeachers(w http.ResponseWriter, r *http.Request) {
 
 
 // =======================
-// ✅ FULL JOIN DATA
+// FULL JOIN DATA
 // =======================
 func GetTeacherFull(w http.ResponseWriter, r *http.Request) {
 
@@ -135,7 +135,7 @@ func GetTeacherFull(w http.ResponseWriter, r *http.Request) {
 
 
 // =======================
-// ✅ UPDATE
+//  UPDATE
 // =======================
 func UpdateTeacher(w http.ResponseWriter, r *http.Request) {
 
@@ -163,7 +163,7 @@ func UpdateTeacher(w http.ResponseWriter, r *http.Request) {
 
 
 // =======================
-// ✅ DELETE
+// DELETE
 // =======================
 func DeleteTeacher(w http.ResponseWriter, r *http.Request) {
 

@@ -35,7 +35,7 @@ protected.HandleFunc("/fee/create", controllers.CreateFee).Methods("POST")
 protected.HandleFunc("/fee/pay", controllers.PayFee).Methods("POST")
 protected.HandleFunc("/fee/{id}", controllers.GetFeeDetails).Methods("GET")
 
-	// Dashboard
+	// Dashboard admin api full data total students , teacher , 
 	protected.HandleFunc("/dashboard", controllers.GetDashboard).Methods("GET")
 
 	// Admission

@@ -52,6 +52,7 @@ func AddMultipleStudents(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
+// get students fetch data from create students 
 func GetStudents(w http.ResponseWriter, r *http.Request) {
 
 	cursor, err := config.DB.Collection("students").Find(context.TODO(), bson.M{})
@@ -61,7 +62,15 @@ func GetStudents(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var students []models.Student
-	cursor.All(context.TODO(), &students)
+
+	if err := cursor.All(context.TODO(), &students); err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	if students == nil {
+		students = []models.Student{} // avoid null
+	}
 
 	json.NewEncoder(w).Encode(students)
 }
