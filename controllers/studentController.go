@@ -18,7 +18,10 @@ import (
 // =======================
 // ADD MULTIPLE STUDENTS
 // =======================
+
 func AddMultipleStudents(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("Content-Type", "application/json")
 
 	var input []struct {
 		Name    string `json:"name"`
@@ -30,7 +33,11 @@ func AddMultipleStudents(w http.ResponseWriter, r *http.Request) {
 		Phone   string `json:"phone"`
 	}
 
-	json.NewDecoder(r.Body).Decode(&input)
+	err := json.NewDecoder(r.Body).Decode(&input)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	var docs []interface{}
 
@@ -38,10 +45,11 @@ func AddMultipleStudents(w http.ResponseWriter, r *http.Request) {
 
 		classID, err := primitive.ObjectIDFromHex(s.ClassID)
 		if err != nil {
-			continue // ❌ invalid skip
+			continue
 		}
 
-		data := models.Student{
+		student := models.Student{
+			ID:        primitive.NewObjectID(),
 			Name:      s.Name,
 			ClassID:   &classID,
 			RollNo:    s.RollNo,
@@ -53,51 +61,66 @@ func AddMultipleStudents(w http.ResponseWriter, r *http.Request) {
 			UpdatedAt: time.Now(),
 		}
 
-		docs = append(docs, data)
+		docs = append(docs, student)
 	}
 
 	if len(docs) == 0 {
-		http.Error(w, "No valid students to insert", 400)
+		http.Error(w, "No valid students found", http.StatusBadRequest)
 		return
 	}
 
-	res, err := config.DB.Collection("students").InsertMany(context.TODO(), docs)
+	result, err := config.DB.Collection("students").InsertMany(
+		context.TODO(),
+		docs,
+	)
+
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	json.NewEncoder(w).Encode(res)
+	json.NewEncoder(w).Encode(bson.M{
+		"success":      true,
+		"inserted_ids": result.InsertedIDs,
+	})
 }
 
 
 // =======================
-// GET STUDENTS (SAFE)
+// GET STUDENTS
 // =======================
+
 func GetStudents(w http.ResponseWriter, r *http.Request) {
 
-	cursor, err := config.DB.Collection("students").Find(context.TODO(), bson.M{})
+	w.Header().Set("Content-Type", "application/json")
+
+	filter := bson.M{
+		"deletedAt": bson.M{
+			"$exists": false,
+		},
+	}
+
+	cursor, err := config.DB.Collection("students").Find(
+		context.TODO(),
+		filter,
+	)
+
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
 	}
+
 	defer cursor.Close(context.TODO())
 
-	var students []models.Student
+	var students []bson.M
 
-	for cursor.Next(context.TODO()) {
-		var s models.Student
-
-		// ❗ skip bad records (important fix)
-		if err := cursor.Decode(&s); err != nil {
-			continue
-		}
-
-		students = append(students, s)
+	if err = cursor.All(context.TODO(), &students); err != nil {
+		http.Error(w, err.Error(), 500)
+		return
 	}
 
 	if students == nil {
-		students = []models.Student{}
+		students = []bson.M{}
 	}
 
 	json.NewEncoder(w).Encode(students)
@@ -105,101 +128,89 @@ func GetStudents(w http.ResponseWriter, r *http.Request) {
 
 
 // =======================
-// GET FULL STUDENT (JOIN)
+// GET FULL STUDENT
 // =======================
+
 func GetStudentFull(w http.ResponseWriter, r *http.Request) {
 
 	id := mux.Vars(r)["id"]
-	objID, _ := primitive.ObjectIDFromHex(id)
+
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		http.Error(w, "Invalid ID", 400)
+		return
+	}
 
 	pipeline := bson.A{
 
-		bson.M{"$match": bson.M{"_id": objID}},
+		bson.M{
+			"$match": bson.M{
+				"_id": objID,
+			},
+		},
 
-		bson.M{"$lookup": bson.M{
-			"from":         "classes",
-			"localField":   "class_id",
-			"foreignField": "_id",
-			"as":           "class",
-		}},
+		bson.M{
+			"$lookup": bson.M{
+				"from":         "classes",
+				"localField":   "class_id",
+				"foreignField": "_id",
+				"as":           "class_data",
+			},
+		},
 
-		bson.M{"$lookup": bson.M{
-			"from":         "subjects",
-			"localField":   "class_id",
-			"foreignField": "class_id",
-			"as":           "subjects",
-		}},
-		// attendance 
-		bson.M{"$lookup": bson.M{
-			"from": "attendance",
-			"localField": "_id",
-			"foreignField": "student_id",
-			"as": "attendance",
-		}},
+		bson.M{
+			"$lookup": bson.M{
+				"from":         "subjects",
+				"localField":   "class_id",
+				"foreignField": "class_id",
+				"as":           "subjects",
+			},
+		},
 
-		// marks 
-		bson.M{"$lookup": bson.M{
-			"from": "marks",
-			"localField": "_id",
-			"foreignField": "student_id",
-			"as": "marks",
-		}},
+		bson.M{
+			"$lookup": bson.M{
+				"from":         "attendance",
+				"localField":   "_id",
+				"foreignField": "student_id",
+				"as":           "attendance",
+			},
+		},
 
-		// exam 
+		bson.M{
+			"$lookup": bson.M{
+				"from":         "marks",
+				"localField":   "_id",
+				"foreignField": "student_id",
+				"as":           "marks",
+			},
+		},
 
-		bson.M{"$lookup": bson.M{
-			"from": "timetable",
-			"localField": "class_id",
-			"foreignField": "class_id",
-			"as": "timetable",
-		}},
-
-
-		// fees
-		bson.M{"$lookup": bson.M{
-			"from": "fees",
-			"localField": "_id",
-			"foreignField": "student_id",
-			"as": "fees",
-		}},
-
-		// books 
-		bson.M{"$lookup": bson.M{
-			"from": "books",
-			"localField": "class_id",
-			"foreignField": "class",
-			"as": "books",
-		}},
-
-		//  Parent
-		bson.M{"$lookup": bson.M{
-			"from": "parents",
-			"localField": "parent_id",
-			"foreignField": "_id",
-			"as": "parent",
-		}},
-
-		//  Assignments
-		bson.M{"$lookup": bson.M{
-			"from": "assignments",
-			"localField": "class_id",
-			"foreignField": "class_id",
-			"as": "assignments",
-		}},
-
-		//  Submissions
-		bson.M{"$lookup": bson.M{
-			"from": "submissions",
-			"localField": "_id",
-			"foreignField": "student_id",
-			"as": "submissions",
-		}},
+		bson.M{
+			"$lookup": bson.M{
+				"from":         "fees",
+				"localField":   "_id",
+				"foreignField": "student_id",
+				"as":           "fees",
+			},
+		},
 	}
 
-	cursor, _ := config.DB.Collection("students").Aggregate(context.TODO(), pipeline)
+	cursor, err := config.DB.Collection("students").Aggregate(
+		context.TODO(),
+		pipeline,
+	)
+
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
 
 	var result []bson.M
-	cursor.All(context.TODO(), &result)
+
+	if err = cursor.All(context.TODO(), &result); err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
 
 	json.NewEncoder(w).Encode(result)
 }
@@ -208,20 +219,35 @@ func GetStudentFull(w http.ResponseWriter, r *http.Request) {
 // =======================
 // UPDATE STUDENT
 // =======================
+
 func UpdateStudent(w http.ResponseWriter, r *http.Request) {
 
 	id := mux.Vars(r)["id"]
-	objID, _ := primitive.ObjectIDFromHex(id)
+
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		http.Error(w, "Invalid ID", 400)
+		return
+	}
 
 	var update bson.M
-	json.NewDecoder(r.Body).Decode(&update)
+
+	err = json.NewDecoder(r.Body).Decode(&update)
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
 
 	update["updatedAt"] = time.Now()
 
-	_, err := config.DB.Collection("students").UpdateOne(
+	_, err = config.DB.Collection("students").UpdateOne(
 		context.TODO(),
-		bson.M{"_id": objID},
-		bson.M{"$set": update},
+		bson.M{
+			"_id": objID,
+		},
+		bson.M{
+			"$set": update,
+		},
 	)
 
 	if err != nil {
@@ -229,24 +255,39 @@ func UpdateStudent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode("Updated")
+	json.NewEncoder(w).Encode(bson.M{
+		"success": true,
+		"message": "Student updated",
+	})
 }
 
 
 // =======================
-// DELETE STUDENT (SOFT)
+// DELETE STUDENT
 // =======================
+
 func DeleteStudent(w http.ResponseWriter, r *http.Request) {
 
 	id := mux.Vars(r)["id"]
-	objID, _ := primitive.ObjectIDFromHex(id)
+
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		http.Error(w, "Invalid ID", 400)
+		return
+	}
 
 	now := time.Now()
 
-	_, err := config.DB.Collection("students").UpdateOne(
+	_, err = config.DB.Collection("students").UpdateOne(
 		context.TODO(),
-		bson.M{"_id": objID},
-		bson.M{"$set": bson.M{"deletedAt": now}},
+		bson.M{
+			"_id": objID,
+		},
+		bson.M{
+			"$set": bson.M{
+				"deletedAt": now,
+			},
+		},
 	)
 
 	if err != nil {
@@ -254,5 +295,8 @@ func DeleteStudent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode("Deleted")
+	json.NewEncoder(w).Encode(bson.M{
+		"success": true,
+		"message": "Student deleted",
+	})
 }
