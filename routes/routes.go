@@ -21,14 +21,6 @@ func SetupRoutes(r *mux.Router) {
 	// Protected Routes
 	protected := r.PathPrefix("/").Subrouter()
 	protected.Use(middleware.AuthMiddleware)
-
-	// Student
-	
-	protected.HandleFunc("/students", controllers.GetStudents).Methods("GET")
-	protected.HandleFunc("/students/bulk", controllers.AddMultipleStudents).Methods("POST")
-	protected.HandleFunc("/student/{id}", controllers.GetStudentFull).Methods("GET")
-	protected.HandleFunc("/student/{id}", controllers.UpdateStudent).Methods("PUT")
-	protected.HandleFunc("/student/{id}", controllers.DeleteStudent).Methods("DELETE")
 	
 	// Dashboard admin api full data total students , teacher , 
 	protected.HandleFunc("/dashboard", controllers.GetDashboard).Methods("GET")
@@ -122,4 +114,82 @@ protected.HandleFunc("/create-fee", controllers.CreateFee).Methods("POST")
 protected.HandleFunc("/create-bulk-fee", controllers.CreateBulkFee).Methods("POST")
 protected.HandleFunc("/pay-fee", controllers.PayFee).Methods("POST")
 protected.HandleFunc("/fees", controllers.GetAllFees).Methods("GET")
+
+
+
+// transport
+// CREATE BUS
+protected.HandleFunc(
+	"/bus",
+	controllers.CreateBus,
+).Methods("POST")
+
+// GET ALL BUSES
+protected.HandleFunc(
+	"/buses",
+	controllers.GetBuses,
+).Methods("GET")
+
+// GET SINGLE BUS
+protected.HandleFunc(
+	"/bus/{id}",
+	controllers.GetBusByID,
+).Methods("GET")
+
+// ASSIGN BUS TO STUDENT
+protected.HandleFunc(
+	"/transport",
+	controllers.AssignTransport,
+).Methods("POST")
+
+// FULL TRANSPORT DETAILS
+protected.HandleFunc(
+	"/transport/details",
+	controllers.GetTransportDetails,
+).Methods("GET")
+
+// STUDENT MODULE
+
+// ADD SINGLE STUDENT
+protected.HandleFunc(
+	"/students",
+	controllers.AddStudent,
+).Methods("POST")
+
+// ADD MULTIPLE STUDENTS
+protected.HandleFunc(
+	"/students/bulk",
+	controllers.AddMultipleStudents,
+).Methods("POST")
+
+// GET ALL STUDENTS
+protected.HandleFunc(
+	"/students",
+	controllers.GetStudents,
+).Methods("GET")
+
+// GET SINGLE STUDENT
+protected.HandleFunc(
+	"/student/{id}",
+	controllers.GetStudentByID,
+).Methods("GET")
+
+// FULL STUDENT DETAILS
+protected.HandleFunc(
+	"/student/full/{id}",
+	controllers.GetStudentFull,
+).Methods("GET")
+
+// UPDATE
+protected.HandleFunc(
+	"/student/{id}",
+	controllers.UpdateStudent,
+).Methods("PUT")
+
+// DELETE
+protected.HandleFunc(
+	"/student/{id}",
+	controllers.DeleteStudent,
+).Methods("DELETE")
+
 }

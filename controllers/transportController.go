@@ -4,74 +4,133 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"school/config"
 	"school/models"
 
+	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-
-// ======================
-// ASSIGN BUS TO STUDENT
-// ======================
-func AssignTransport(w http.ResponseWriter, r *http.Request) {
-
-	var transport models.Transport
-
-	err := json.NewDecoder(r.Body).Decode(&transport)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	transport.ID = primitive.NewObjectID()
-
-	_, err = config.DB.Collection("transport").InsertOne(context.TODO(), transport)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	json.NewEncoder(w).Encode("Transport Assigned Successfully")
-}
-
-
-// ======================
 // CREATE BUS
-// ======================
+
 func CreateBus(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("Content-Type", "application/json")
 
 	var bus models.Bus
 
 	err := json.NewDecoder(r.Body).Decode(&bus)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), 400)
 		return
 	}
 
 	bus.ID = primitive.NewObjectID()
+	bus.CreatedAt = time.Now()
 
-	_, err = config.DB.Collection("buses").InsertOne(context.TODO(), bus)
+	_, err = config.DB.Collection("buses").InsertOne(
+		context.TODO(),
+		bus,
+	)
+
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), 500)
 		return
 	}
 
-	json.NewEncoder(w).Encode("Bus Created")
+	json.NewEncoder(w).Encode(bson.M{
+		"success": true,
+		"message": "Bus Created",
+	})
+}
+// GET ALL BUSES
+
+func GetBuses(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("Content-Type", "application/json")
+
+	cursor, err := config.DB.Collection("buses").Find(
+		context.TODO(),
+		bson.M{},
+	)
+
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	defer cursor.Close(context.TODO())
+
+	var buses []models.Bus
+
+	cursor.All(context.TODO(), &buses)
+
+	if buses == nil {
+		buses = []models.Bus{}
+	}
+
+	json.NewEncoder(w).Encode(buses)
 }
 
+// ASSIGN BUS TO students
 
-// ======================
-// GET FULL TRANSPORT DATA (JOIN)
-// ======================
+func AssignTransport(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("Content-Type", "application/json")
+
+	var transport models.Transport
+
+	err := json.NewDecoder(r.Body).Decode(&transport)
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
+
+	transport.ID = primitive.NewObjectID()
+	transport.CreatedAt = time.Now()
+
+	_, err = config.DB.Collection("transport").InsertOne(
+		context.TODO(),
+		transport,
+	)
+
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	// increase occupied seats
+	_, _ = config.DB.Collection("buses").UpdateOne(
+		context.TODO(),
+		bson.M{
+			"_id": transport.BusID,
+		},
+		bson.M{
+			"$inc": bson.M{
+				"occupied_seats": 1,
+			},
+		},
+	)
+
+	json.NewEncoder(w).Encode(bson.M{
+		"success": true,
+		"message": "Transport Assigned",
+	})
+}
+
+// FULL TRANSPORT DETAILS
+
 func GetTransportDetails(w http.ResponseWriter, r *http.Request) {
 
-	pipeline := []bson.M{
+	w.Header().Set("Content-Type", "application/json")
 
-		// join student
-		{
+	pipeline := bson.A{
+
+		// JOIN STUDENT
+		bson.M{
 			"$lookup": bson.M{
 				"from":         "students",
 				"localField":   "student_id",
@@ -80,25 +139,66 @@ func GetTransportDetails(w http.ResponseWriter, r *http.Request) {
 			},
 		},
 
-		// join bus (route match)
-		{
+		// JOIN BUS
+		bson.M{
 			"$lookup": bson.M{
 				"from":         "buses",
-				"localField":   "route",
-				"foreignField": "route",
+				"localField":   "bus_id",
+				"foreignField": "_id",
 				"as":           "bus",
 			},
 		},
 	}
 
-	cursor, err := config.DB.Collection("transport").Aggregate(context.TODO(), pipeline)
+	cursor, err := config.DB.Collection("transport").Aggregate(
+		context.TODO(),
+		pipeline,
+	)
+
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), 500)
 		return
 	}
 
 	var result []bson.M
+
 	cursor.All(context.TODO(), &result)
 
+	if result == nil {
+		result = []bson.M{}
+	}
+
 	json.NewEncoder(w).Encode(result)
+}
+
+
+// SINGLE BUS DETAILS
+
+func GetBusByID(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("Content-Type", "application/json")
+
+	id := mux.Vars(r)["id"]
+
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		http.Error(w, "Invalid ID", 400)
+		return
+	}
+
+	var bus models.Bus
+
+	err = config.DB.Collection("buses").FindOne(
+		context.TODO(),
+		bson.M{
+			"_id": objID,
+		},
+	).Decode(&bus)
+
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	json.NewEncoder(w).Encode(bus)
 }
