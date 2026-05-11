@@ -148,48 +148,17 @@ protected.HandleFunc(
 	controllers.GetTransportDetails,
 ).Methods("GET")
 
-// STUDENT MODULE
+// STUDENTS
+protected.HandleFunc("/students", controllers.AddStudent).Methods("POST")
+protected.HandleFunc("/students", controllers.GetStudents).Methods("GET")
 
-// ADD SINGLE STUDENT
-protected.HandleFunc(
-	"/students",
-	controllers.AddStudent,
-).Methods("POST")
+protected.HandleFunc("/students/bulk", controllers.AddMultipleStudents).Methods("POST")
 
-// ADD MULTIPLE STUDENTS
-protected.HandleFunc(
-	"/students/bulk",
-	controllers.AddMultipleStudents,
-).Methods("POST")
+protected.HandleFunc("/student/{id}", controllers.GetStudentByID).Methods("GET")
 
-// GET ALL STUDENTS
-protected.HandleFunc(
-	"/students",
-	controllers.GetStudents,
-).Methods("GET")
+protected.HandleFunc("/student/full/{id}", controllers.GetStudentFull).Methods("GET")
 
-// GET SINGLE STUDENT
-protected.HandleFunc(
-	"/student/{id}",
-	controllers.GetStudentByID,
-).Methods("GET")
+protected.HandleFunc("/student/{id}", controllers.UpdateStudent).Methods("PUT")
 
-// FULL STUDENT DETAILS
-protected.HandleFunc(
-	"/student/full/{id}",
-	controllers.GetStudentFull,
-).Methods("GET")
-
-// UPDATE
-protected.HandleFunc(
-	"/student/{id}",
-	controllers.UpdateStudent,
-).Methods("PUT")
-
-// DELETE
-protected.HandleFunc(
-	"/student/{id}",
-	controllers.DeleteStudent,
-).Methods("DELETE")
-
+protected.HandleFunc("/student/{id}", controllers.DeleteStudent).Methods("DELETE")
 }
