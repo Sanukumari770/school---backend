@@ -75,17 +75,19 @@ protected.Handle(
 	"/parent/dashboard",
 	middleware.Authorize("parent")(http.HandlerFunc(controllers.GetParentDashboard)),
 ).Methods("GET")
+
+
 // TEACHER MODULE
 protected.Handle("/teacher",
 		middleware.Authorize("admin")(http.HandlerFunc(controllers.AddTeacher)),
 	).Methods("POST")
-
-	protected.HandleFunc("/teachers", controllers.GetTeachers).Methods("GET")
+    protected.HandleFunc("/teachers", controllers.AddTeacher).Methods("POST")  // add single tecaher 
+	protected.HandleFunc("/teachers", controllers.GetTeachers).Methods("GET") // get teacher deatils 
 	protected.HandleFunc("/teachers/bulk", controllers.AddMultipleTeachers).Methods("POST")
 
-	protected.HandleFunc("/teacher/{id}", controllers.GetTeacherFull).Methods("GET")
-	protected.HandleFunc("/teacher/{id}", controllers.UpdateTeacher).Methods("PUT")
-	protected.HandleFunc("/teacher/{id}", controllers.DeleteTeacher).Methods("DELETE")
+	protected.HandleFunc("/teachers/{id}", controllers.GetTeacherByID).Methods("GET")
+	protected.HandleFunc("/teachers/{id}", controllers.UpdateTeacher).Methods("PUT")
+	protected.HandleFunc("/teachers/{id}", controllers.DeleteTeacher).Methods("DELETE")
 
 
 // SALARY

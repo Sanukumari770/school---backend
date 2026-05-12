@@ -12,176 +12,287 @@ import (
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
+var teacherCollection = config.DB.Collection("teachers")
 
-// =======================
+// ==========================
 // ADD SINGLE TEACHER
-// =======================
+// ==========================
+
 func AddTeacher(w http.ResponseWriter, r *http.Request) {
 
-	var teacher models.Teacher
-	json.NewDecoder(r.Body).Decode(&teacher)
-
-	teacher.CreatedAt = time.Now()
-	teacher.UpdatedAt = time.Now()
-
-	res, err := config.DB.Collection("teachers").InsertOne(context.TODO(), teacher)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-
-	json.NewEncoder(w).Encode(res)
-}
-
-
-// =======================
-// ADD MULTIPLE TEACHERS
-// =======================
-func AddMultipleTeachers(w http.ResponseWriter, r *http.Request) {
-
-	var teachers []models.Teacher
-	json.NewDecoder(r.Body).Decode(&teachers)
-
-	var docs []interface{}
-
-	for _, t := range teachers {
-		t.CreatedAt = time.Now()
-		t.UpdatedAt = time.Now()
-		docs = append(docs, t)
-	}
-
-	res, err := config.DB.Collection("teachers").InsertMany(context.TODO(), docs)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-
-	json.NewEncoder(w).Encode(res)
-}
-
-
-// =======================
-//  GET ALL TEACHERS
-// =======================
-func GetTeachers(w http.ResponseWriter, r *http.Request) {
-
-	cursor, err := config.DB.Collection("teachers").Find(context.TODO(), bson.M{})
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-
-	var teachers []models.Teacher
-	cursor.All(context.TODO(), &teachers)
-
-	json.NewEncoder(w).Encode(teachers)
-}
-
-
-// =======================
-// FULL JOIN DATA
-// =======================
-func GetTeacherFull(w http.ResponseWriter, r *http.Request) {
-
-	id := mux.Vars(r)["id"]
-	teacherID, _ := primitive.ObjectIDFromHex(id)
-
-	pipeline := mongo.Pipeline{
-		bson.D{{Key: "$match", Value: bson.M{"_id": teacherID}}},
-
-		bson.D{{Key: "$lookup", Value: bson.M{
-			"from": "subjects",
-			"localField": "_id",
-			"foreignField": "teacher_id",
-			"as": "subjects",
-		}}},
-
-		bson.D{{Key: "$lookup", Value: bson.M{
-			"from": "classes",
-			"localField": "classes",
-			"foreignField": "_id",
-			"as": "classes",
-		}}},
-
-		bson.D{{Key: "$lookup", Value: bson.M{
-			"from": "assignments",
-			"localField": "_id",
-			"foreignField": "teacher_id",
-			"as": "assignments",
-		}}},
-
-		bson.D{{Key: "$lookup", Value: bson.M{
-			"from": "payroll",
-			"localField": "_id",
-			"foreignField": "teacher_id",
-			"as": "payroll",
-		}}},
-	}
-
-	cursor, err := config.DB.Collection("teachers").Aggregate(context.TODO(), pipeline)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-
-	var result []bson.M
-	cursor.All(context.TODO(), &result)
-
-	json.NewEncoder(w).Encode(result)
-}
-
-
-// =======================
-//  UPDATE
-// =======================
-func UpdateTeacher(w http.ResponseWriter, r *http.Request) {
-
-	id := mux.Vars(r)["id"]
-	objID, _ := primitive.ObjectIDFromHex(id)
+	w.Header().Set("Content-Type", "application/json")
 
 	var teacher models.Teacher
-	json.NewDecoder(r.Body).Decode(&teacher)
 
-	teacher.UpdatedAt = time.Now()
-
-	_, err := config.DB.Collection("teachers").UpdateOne(
-		context.TODO(),
-		bson.M{"_id": objID},
-		bson.M{"$set": teacher},
-	)
+	err := json.NewDecoder(r.Body).Decode(&teacher)
 
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	json.NewEncoder(w).Encode("Updated")
-}
-
-
-// =======================
-// DELETE
-// =======================
-func DeleteTeacher(w http.ResponseWriter, r *http.Request) {
-
-	id := mux.Vars(r)["id"]
-	objID, _ := primitive.ObjectIDFromHex(id)
+	teacher.ID = primitive.NewObjectID()
 
 	now := time.Now()
 
-	_, err := config.DB.Collection("teachers").UpdateOne(
-		context.TODO(),
-		bson.M{"_id": objID},
-		bson.M{"$set": bson.M{"deletedAt": now}},
+	teacher.CreatedAt = now
+	teacher.UpdatedAt = now
+
+	_, err = teacherCollection.InsertOne(
+		context.Background(),
+		teacher,
 	)
 
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	json.NewEncoder(w).Encode("Deleted")
+	json.NewEncoder(w).Encode(bson.M{
+		"success": true,
+		"message": "Teacher Added Successfully",
+		"data":    teacher,
+	})
+}
+
+// ==========================
+// ADD MULTIPLE TEACHERS
+// ==========================
+
+func AddMultipleTeachers(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("Content-Type", "application/json")
+
+	var teachers []models.Teacher
+
+	err := json.NewDecoder(r.Body).Decode(&teachers)
+
+	if err != nil {
+
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if len(teachers) == 0 {
+
+		http.Error(w, "No teachers data found", http.StatusBadRequest)
+		return
+	}
+
+	var docs []interface{}
+
+	for i := range teachers {
+
+		teachers[i].ID = primitive.NewObjectID()
+
+		now := time.Now()
+
+		teachers[i].CreatedAt = now
+		teachers[i].UpdatedAt = now
+
+		docs = append(docs, teachers[i])
+	}
+
+	result, err := teacherCollection.InsertMany(
+		context.Background(),
+		docs,
+	)
+
+	if err != nil {
+
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(bson.M{
+		"success":      true,
+		"message":      "Multiple Teachers Added Successfully",
+		"inserted_ids": result.InsertedIDs,
+		"count":        len(result.InsertedIDs),
+	})
+}
+
+// ==========================
+// GET ALL TEACHERS
+// ==========================
+
+func GetTeachers(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("Content-Type", "application/json")
+
+	filter := bson.M{
+		"deleted_at": bson.M{
+			"$exists": false,
+		},
+	}
+
+	cursor, err := teacherCollection.Find(
+		context.Background(),
+		filter,
+	)
+
+	if err != nil {
+
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	defer cursor.Close(context.Background())
+
+	var teachers []models.Teacher
+
+	err = cursor.All(context.Background(), &teachers)
+
+	if err != nil {
+
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if teachers == nil {
+
+		teachers = []models.Teacher{}
+	}
+
+	json.NewEncoder(w).Encode(bson.M{
+		"success": true,
+		"count":   len(teachers),
+		"data":    teachers,
+	})
+}
+
+// ==========================
+// GET SINGLE TEACHER
+// ==========================
+
+func GetTeacherByID(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("Content-Type", "application/json")
+
+	id := mux.Vars(r)["id"]
+
+	objID, err := primitive.ObjectIDFromHex(id)
+
+	if err != nil {
+
+		http.Error(w, "Invalid Teacher ID", http.StatusBadRequest)
+		return
+	}
+
+	var teacher models.Teacher
+
+	err = teacherCollection.FindOne(
+		context.Background(),
+		bson.M{
+			"_id": objID,
+		},
+	).Decode(&teacher)
+
+	if err != nil {
+
+		http.Error(w, "Teacher Not Found", http.StatusNotFound)
+		return
+	}
+
+	json.NewEncoder(w).Encode(teacher)
+}
+
+// ==========================
+// UPDATE TEACHER
+// ==========================
+
+func UpdateTeacher(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("Content-Type", "application/json")
+
+	id := mux.Vars(r)["id"]
+
+	objID, err := primitive.ObjectIDFromHex(id)
+
+	if err != nil {
+
+		http.Error(w, "Invalid Teacher ID", http.StatusBadRequest)
+		return
+	}
+
+	var updateData bson.M
+
+	err = json.NewDecoder(r.Body).Decode(&updateData)
+
+	if err != nil {
+
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	updateData["updated_at"] = time.Now()
+
+	_, err = teacherCollection.UpdateOne(
+		context.Background(),
+		bson.M{
+			"_id": objID,
+		},
+		bson.M{
+			"$set": updateData,
+		},
+	)
+
+	if err != nil {
+
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(bson.M{
+		"success": true,
+		"message": "Teacher Updated Successfully",
+	})
+}
+
+// ==========================
+// DELETE TEACHER
+// ==========================
+
+func DeleteTeacher(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("Content-Type", "application/json")
+
+	id := mux.Vars(r)["id"]
+
+	objID, err := primitive.ObjectIDFromHex(id)
+
+	if err != nil {
+
+		http.Error(w, "Invalid Teacher ID", http.StatusBadRequest)
+		return
+	}
+
+	now := time.Now()
+
+	_, err = teacherCollection.UpdateOne(
+		context.Background(),
+		bson.M{
+			"_id": objID,
+		},
+		bson.M{
+			"$set": bson.M{
+				"deleted_at": now,
+			},
+		},
+	)
+
+	if err != nil {
+
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(bson.M{
+		"success": true,
+		"message": "Teacher Deleted Successfully",
+	})
 }

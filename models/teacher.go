@@ -17,9 +17,9 @@ type Teacher struct {
 
 	Class string `json:"class" bson:"class"`
 
-	CreatedAt time.Time `json:"createdAt" bson:"createdAt"`
+	CreatedAt time.Time `json:"created_at" bson:"created_at"`
 
-	UpdatedAt time.Time `json:"updatedAt" bson:"updatedAt"`
+	UpdatedAt time.Time `json:"updated_at" bson:"updated_at"`
 
-	DeletedAt *time.Time `json:"deletedAt,omitempty" bson:"deletedAt,omitempty"`
+	DeletedAt *time.Time `json:"deleted_at,omitempty" bson:"deleted_at,omitempty"`
 }
