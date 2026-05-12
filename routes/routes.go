@@ -154,11 +154,12 @@ protected.HandleFunc("/students", controllers.GetStudents).Methods("GET")
 
 protected.HandleFunc("/students/bulk", controllers.AddMultipleStudents).Methods("POST")
 
-protected.HandleFunc("/student/{id}", controllers.GetStudentByID).Methods("GET")
+protected.HandleFunc("/students/{id}", controllers.GetStudentByID).Methods("GET")
 
-protected.HandleFunc("/student/full/{id}", controllers.GetStudentFull).Methods("GET")
+protected.HandleFunc("/students/{id}", controllers.GetStudentByID).Methods("GET")
 
-protected.HandleFunc("/student/{id}", controllers.UpdateStudent).Methods("PUT")
 
-protected.HandleFunc("/student/{id}", controllers.DeleteStudent).Methods("DELETE")
+protected.HandleFunc("/students/{id}", controllers.UpdateStudent).Methods("PUT")
+
+protected.HandleFunc("/students/{id}", controllers.DeleteStudent).Methods("DELETE")
 }

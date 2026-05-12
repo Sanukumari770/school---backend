@@ -14,60 +14,40 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+var studentCollection = config.DB.Collection("students")
 
-// =======================
+// ==========================
 // ADD SINGLE STUDENT
-// =======================
+// ==========================
 
 func AddStudent(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
-	var input struct {
-		Name    string `json:"name"`
-		ClassID string `json:"class_id"`
-		RollNo  string `json:"roll_no"`
-		Class   string `json:"class"`
-		Section string `json:"section"`
-		Email   string `json:"email"`
-		Phone   string `json:"phone"`
-	}
+	var student models.Student
 
-	err := json.NewDecoder(r.Body).Decode(&input)
+	err := json.NewDecoder(r.Body).Decode(&student)
+
 	if err != nil {
+
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	var classObjID *primitive.ObjectID
+	student.ID = primitive.NewObjectID()
 
-	if input.ClassID != "" {
+	now := time.Now()
 
-		objID, err := primitive.ObjectIDFromHex(input.ClassID)
-		if err == nil {
-			classObjID = &objID
-		}
-	}
+	student.CreatedAt = now
+	student.UpdatedAt = now
 
-	student := models.Student{
-		ID:        primitive.NewObjectID(),
-		Name:      input.Name,
-		ClassID:   classObjID,
-		RollNo:    input.RollNo,
-		Class:     input.Class,
-		Section:   input.Section,
-		Email:     input.Email,
-		Phone:     input.Phone,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	}
-
-	_, err = config.DB.Collection("students").InsertOne(
-		context.TODO(),
+	_, err = studentCollection.InsertOne(
+		context.Background(),
 		student,
 	)
 
 	if err != nil {
+
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -75,75 +55,49 @@ func AddStudent(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(bson.M{
 		"success": true,
 		"message": "Student Added Successfully",
+		"data":    student,
 	})
 }
 
-
-// =======================
+// ==========================
 // ADD MULTIPLE STUDENTS
-// =======================
+// ==========================
 
 func AddMultipleStudents(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
-	var input []struct {
-		Name    string `json:"name"`
-		ClassID string `json:"class_id"`
-		RollNo  string `json:"roll_no"`
-		Class   string `json:"class"`
-		Section string `json:"section"`
-		Email   string `json:"email"`
-		Phone   string `json:"phone"`
-	}
+	var students []models.Student
 
-	err := json.NewDecoder(r.Body).Decode(&input)
+	err := json.NewDecoder(r.Body).Decode(&students)
+
 	if err != nil {
+
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	var docs []interface{}
 
-	for _, s := range input {
+	for i := range students {
 
-		var classObjID *primitive.ObjectID
+		students[i].ID = primitive.NewObjectID()
 
-		if s.ClassID != "" {
+		now := time.Now()
 
-			objID, err := primitive.ObjectIDFromHex(s.ClassID)
-			if err == nil {
-				classObjID = &objID
-			}
-		}
+		students[i].CreatedAt = now
+		students[i].UpdatedAt = now
 
-		student := models.Student{
-			ID:        primitive.NewObjectID(),
-			Name:      s.Name,
-			ClassID:   classObjID,
-			RollNo:    s.RollNo,
-			Class:     s.Class,
-			Section:   s.Section,
-			Email:     s.Email,
-			Phone:     s.Phone,
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
-		}
-
-		docs = append(docs, student)
+		docs = append(docs, students[i])
 	}
 
-	if len(docs) == 0 {
-		http.Error(w, "No valid students found", http.StatusBadRequest)
-		return
-	}
-
-	result, err := config.DB.Collection("students").InsertMany(
-		context.TODO(),
+	result, err := studentCollection.InsertMany(
+		context.Background(),
 		docs,
 	)
 
 	if err != nil {
+
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -154,52 +108,58 @@ func AddMultipleStudents(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-
-// =======================
+// ==========================
 // GET ALL STUDENTS
-// =======================
+// ==========================
 
 func GetStudents(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
 	filter := bson.M{
-		"deletedAt": bson.M{
+		"deleted_at": bson.M{
 			"$exists": false,
 		},
 	}
 
-	cursor, err := config.DB.Collection("students").Find(
-		context.TODO(),
+	cursor, err := studentCollection.Find(
+		context.Background(),
 		filter,
 	)
 
 	if err != nil {
+
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	defer cursor.Close(context.TODO())
+	defer cursor.Close(context.Background())
 
 	var students []models.Student
 
-	err = cursor.All(context.TODO(), &students)
+	err = cursor.All(context.Background(), &students)
+
 	if err != nil {
+
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	if students == nil {
+
 		students = []models.Student{}
 	}
 
-	json.NewEncoder(w).Encode(students)
+	json.NewEncoder(w).Encode(bson.M{
+		"success": true,
+		"count":   len(students),
+		"data":    students,
+	})
 }
 
-
-// =======================
+// ==========================
 // GET SINGLE STUDENT
-// =======================
+// ==========================
 
 func GetStudentByID(w http.ResponseWriter, r *http.Request) {
 
@@ -208,169 +168,34 @@ func GetStudentByID(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 
 	objID, err := primitive.ObjectIDFromHex(id)
+
 	if err != nil {
-		http.Error(w, "Invalid student ID", http.StatusBadRequest)
+
+		http.Error(w, "Invalid Student ID", http.StatusBadRequest)
 		return
 	}
 
 	var student models.Student
 
-	err = config.DB.Collection("students").FindOne(
-		context.TODO(),
+	err = studentCollection.FindOne(
+		context.Background(),
 		bson.M{
 			"_id": objID,
 		},
 	).Decode(&student)
 
 	if err != nil {
-		http.Error(w, "Student not found", http.StatusNotFound)
+
+		http.Error(w, "Student Not Found", http.StatusNotFound)
 		return
 	}
 
 	json.NewEncoder(w).Encode(student)
 }
 
-
-// =======================
-// GET FULL STUDENT DETAILS
-// =======================
-
-func GetStudentFull(w http.ResponseWriter, r *http.Request) {
-
-	w.Header().Set("Content-Type", "application/json")
-
-	id := mux.Vars(r)["id"]
-
-	objID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		http.Error(w, "Invalid student ID", http.StatusBadRequest)
-		return
-	}
-
-	pipeline := bson.A{
-
-		bson.M{
-			"$match": bson.M{
-				"_id": objID,
-			},
-		},
-
-		// CLASS
-		bson.M{
-			"$lookup": bson.M{
-				"from":         "classes",
-				"localField":   "class_id",
-				"foreignField": "_id",
-				"as":           "class_data",
-			},
-		},
-
-		// SUBJECTS
-		bson.M{
-			"$lookup": bson.M{
-				"from":         "subjects",
-				"localField":   "class_id",
-				"foreignField": "class_id",
-				"as":           "subjects",
-			},
-		},
-
-		// ATTENDANCE
-		bson.M{
-			"$lookup": bson.M{
-				"from":         "attendance",
-				"localField":   "_id",
-				"foreignField": "student_id",
-				"as":           "attendance",
-			},
-		},
-
-		// MARKS
-		bson.M{
-			"$lookup": bson.M{
-				"from":         "marks",
-				"localField":   "_id",
-				"foreignField": "student_id",
-				"as":           "marks",
-			},
-		},
-
-		// FEES
-		bson.M{
-			"$lookup": bson.M{
-				"from":         "fees",
-				"localField":   "_id",
-				"foreignField": "student_id",
-				"as":           "fees",
-			},
-		},
-
-		// PARENT
-		bson.M{
-			"$lookup": bson.M{
-				"from":         "parents",
-				"localField":   "parent_id",
-				"foreignField": "_id",
-				"as":           "parent",
-			},
-		},
-
-		// ASSIGNMENTS
-		bson.M{
-			"$lookup": bson.M{
-				"from":         "assignments",
-				"localField":   "class_id",
-				"foreignField": "class_id",
-				"as":           "assignments",
-			},
-		},
-
-		// SUBMISSIONS
-		bson.M{
-			"$lookup": bson.M{
-				"from":         "submissions",
-				"localField":   "_id",
-				"foreignField": "student_id",
-				"as":           "submissions",
-			},
-		},
-
-		// TRANSPORT
-		bson.M{
-			"$lookup": bson.M{
-				"from":         "transport",
-				"localField":   "_id",
-				"foreignField": "student_id",
-				"as":           "transport",
-			},
-		},
-	}
-
-	cursor, err := config.DB.Collection("students").Aggregate(
-		context.TODO(),
-		pipeline,
-	)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	var result []bson.M
-
-	err = cursor.All(context.TODO(), &result)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	json.NewEncoder(w).Encode(result)
-}
-
-
-// =======================
+// ==========================
 // UPDATE STUDENT
-// =======================
+// ==========================
 
 func UpdateStudent(w http.ResponseWriter, r *http.Request) {
 
@@ -379,32 +204,37 @@ func UpdateStudent(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 
 	objID, err := primitive.ObjectIDFromHex(id)
+
 	if err != nil {
-		http.Error(w, "Invalid student ID", http.StatusBadRequest)
+
+		http.Error(w, "Invalid Student ID", http.StatusBadRequest)
 		return
 	}
 
-	var update bson.M
+	var updateData bson.M
 
-	err = json.NewDecoder(r.Body).Decode(&update)
+	err = json.NewDecoder(r.Body).Decode(&updateData)
+
 	if err != nil {
+
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	update["updatedAt"] = time.Now()
+	updateData["updated_at"] = time.Now()
 
-	_, err = config.DB.Collection("students").UpdateOne(
-		context.TODO(),
+	_, err = studentCollection.UpdateOne(
+		context.Background(),
 		bson.M{
 			"_id": objID,
 		},
 		bson.M{
-			"$set": update,
+			"$set": updateData,
 		},
 	)
 
 	if err != nil {
+
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -415,10 +245,9 @@ func UpdateStudent(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-
-// =======================
+// ==========================
 // DELETE STUDENT
-// =======================
+// ==========================
 
 func DeleteStudent(w http.ResponseWriter, r *http.Request) {
 
@@ -427,26 +256,29 @@ func DeleteStudent(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 
 	objID, err := primitive.ObjectIDFromHex(id)
+
 	if err != nil {
-		http.Error(w, "Invalid student ID", http.StatusBadRequest)
+
+		http.Error(w, "Invalid Student ID", http.StatusBadRequest)
 		return
 	}
 
 	now := time.Now()
 
-	_, err = config.DB.Collection("students").UpdateOne(
-		context.TODO(),
+	_, err = studentCollection.UpdateOne(
+		context.Background(),
 		bson.M{
 			"_id": objID,
 		},
 		bson.M{
 			"$set": bson.M{
-				"deletedAt": now,
+				"deleted_at": now,
 			},
 		},
 	)
 
 	if err != nil {
+
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
