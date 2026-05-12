@@ -16,9 +16,7 @@ import (
 
 var teacherCollection = config.DB.Collection("teachers")
 
-// ==========================
-// ADD SINGLE TEACHER
-// ==========================
+// add single teacher
 
 func AddTeacher(w http.ResponseWriter, r *http.Request) {
 
@@ -58,10 +56,8 @@ func AddTeacher(w http.ResponseWriter, r *http.Request) {
 		"data":    teacher,
 	})
 }
-
-// ==========================
-// ADD MULTIPLE TEACHERS
-// ==========================
+ 
+ // add multiple teachers
 
 func AddMultipleTeachers(w http.ResponseWriter, r *http.Request) {
 
@@ -116,9 +112,8 @@ func AddMultipleTeachers(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// ==========================
-// GET ALL TEACHERS
-// ==========================
+
+// get all teachers 
 
 func GetTeachers(w http.ResponseWriter, r *http.Request) {
 
@@ -165,9 +160,8 @@ func GetTeachers(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// ==========================
-// GET SINGLE TEACHER
-// ==========================
+
+// get single teacher 
 
 func GetTeacherByID(w http.ResponseWriter, r *http.Request) {
 
@@ -201,9 +195,8 @@ func GetTeacherByID(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(teacher)
 }
 
-// ==========================
-// UPDATE TEACHER
-// ==========================
+
+// updated tecaher 
 
 func UpdateTeacher(w http.ResponseWriter, r *http.Request) {
 
@@ -253,9 +246,7 @@ func UpdateTeacher(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// ==========================
-// DELETE TEACHER
-// ==========================
+// deleted teachers 
 
 func DeleteTeacher(w http.ResponseWriter, r *http.Request) {
 

@@ -5,27 +5,27 @@ import (
 )
 
 type Student struct {
-	ID primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
+	ID primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"` // createted  students id from api testing 
 
-	Name string `json:"name" bson:"name"`
+	Name string `json:"name" bson:"name"` // name of students 
 
-	ClassID *primitive.ObjectID `json:"class_id,omitempty" bson:"class_id,omitempty"`
+	ClassID *primitive.ObjectID `json:"class_id,omitempty" bson:"class_id,omitempty"`// fetch class id from class api test
 
-	RollNo string `json:"roll_no" bson:"roll_no"`
+	RollNo string `json:"roll_no" bson:"roll_no"` // roll number of students 
 
-	Email string `json:"email" bson:"email"`
+	Email string `json:"email" bson:"email"` // email of students 
 
-	Phone string `json:"phone" bson:"phone"`
+	Phone string `json:"phone" bson:"phone"` // phone number of students 
 
-	Class string `json:"class" bson:"class"`
+	Class string `json:"class" bson:"class"` // class of students 
 
-	Section string `json:"section" bson:"section"`
+	Section string `json:"section" bson:"section"` // section with class 
 
-	CreatedAt time.Time `json:"created_at" bson:"createdAt"`
+	CreatedAt time.Time `json:"created_at" bson:"createdAt"`  // students adding time 
 
-	UpdatedAt time.Time `json:"updated_at" bson:"updatedAt"`
+	UpdatedAt time.Time `json:"updated_at" bson:"updatedAt"` // udated deatils time 
 
 	DeletedAt *time.Time `json:"deleted_at,omitempty" bson:"deletedAt,omitempty"`
 
-	ParentID *primitive.ObjectID `json:"parent_id,omitempty" bson:"parent_id,omitempty"`
+	ParentID *primitive.ObjectID `json:"parent_id,omitempty" bson:"parent_id,omitempty"`  // fetch parents details fromm id 
 }

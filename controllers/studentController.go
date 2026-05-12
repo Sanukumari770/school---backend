@@ -1,3 +1,5 @@
+// students api testing thriugh this struc 
+
 package controllers
 
 import (
@@ -8,7 +10,7 @@ import (
 
 	"school/config"
 	"school/models"
-
+// uses mux 
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -16,9 +18,7 @@ import (
 
 var studentCollection = config.DB.Collection("students")
 
-// ==========================
-// ADD SINGLE STUDENT
-// ==========================
+// add single students 
 
 func AddStudent(w http.ResponseWriter, r *http.Request) {
 
@@ -34,7 +34,7 @@ func AddStudent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	student.ID = primitive.NewObjectID()
+	student.ID = primitive.NewObjectID() // students id 
 
 	now := time.Now()
 
@@ -59,9 +59,7 @@ func AddStudent(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// ==========================
-// ADD MULTIPLE STUDENTS
-// ==========================
+// add multiple students 
 
 func AddMultipleStudents(w http.ResponseWriter, r *http.Request) {
 
@@ -107,10 +105,7 @@ func AddMultipleStudents(w http.ResponseWriter, r *http.Request) {
 		"inserted_ids": result.InsertedIDs,
 	})
 }
-
-// ==========================
-// GET ALL STUDENTS
-// ==========================
+// get students 
 
 func GetStudents(w http.ResponseWriter, r *http.Request) {
 
@@ -157,9 +152,7 @@ func GetStudents(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// ==========================
-// GET SINGLE STUDENT
-// ==========================
+// get students by id 
 
 func GetStudentByID(w http.ResponseWriter, r *http.Request) {
 
@@ -192,10 +185,7 @@ func GetStudentByID(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(student)
 }
-
-// ==========================
-// UPDATE STUDENT
-// ==========================
+// updated students 
 
 func UpdateStudent(w http.ResponseWriter, r *http.Request) {
 
@@ -245,9 +235,7 @@ func UpdateStudent(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// ==========================
-// DELETE STUDENT
-// ==========================
+// deleted students 
 
 func DeleteStudent(w http.ResponseWriter, r *http.Request) {
 
