@@ -1,6 +1,7 @@
 package utils
 
 import (
+"errors"
 "os"
 "time"
 "github.com/golang-jwt/jwt/v5"
@@ -19,9 +20,22 @@ func GenerateJWT(userID string, role string) (string, error) {
 }
 
 //  Verify Token (function)
+
 func VerifyToken(tokenStr string) (*jwt.Token, error) {
 
-	return jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
-		return []byte(os.Getenv("JWT_SECRET")), nil
-	})
+	return jwt.Parse(tokenStr,
+
+		func(token *jwt.Token) (interface{}, error) {
+
+			// check signing method
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+
+				return nil, errors.New("invalid token")
+			}
+
+			return []byte(
+				os.Getenv("JWT_SECRET"),
+			), nil
+		},
+	)
 }

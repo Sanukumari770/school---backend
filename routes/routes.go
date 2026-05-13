@@ -25,12 +25,7 @@ func SetupRoutes(r *mux.Router) {
 	// Dashboard admin api full data total students , teacher , 
 	protected.HandleFunc("/dashboard", controllers.GetDashboard).Methods("GET")
 
-	// Admission
-	protected.HandleFunc("/admission/apply", controllers.ApplyAdmission).Methods("POST")
-	protected.HandleFunc("/admission/{id}/entrance", controllers.UpdateEntrance).Methods("PUT")
-	protected.HandleFunc("/admission/{id}/approve", controllers.ApproveAdmission).Methods("POST")
-	protected.HandleFunc("/admission/{id}", controllers.GetAdmissionFull).Methods("GET")
-
+	
 	// Attendance
 protected.HandleFunc("/attendance", controllers.AddAttendance).Methods("POST")
 

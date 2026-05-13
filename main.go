@@ -20,7 +20,9 @@ func main() {
 	if err != nil {
 		log.Println("No .env file found")
 	}
+	config.LoadEnv()
 
+	config.InitLogger()
 	// Connect DB
 	config.ConnectDB()
 

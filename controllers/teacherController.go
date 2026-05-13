@@ -14,9 +14,8 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// ==========================
 // ADD SINGLE TEACHER
-// ==========================
+
 
 func AddTeacher(w http.ResponseWriter, r *http.Request) {
 
@@ -59,9 +58,7 @@ func AddTeacher(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// ==========================
 // ADD MULTIPLE TEACHERS
-// ==========================
 
 func AddMultipleTeachers(w http.ResponseWriter, r *http.Request) {
 
@@ -110,9 +107,7 @@ func AddMultipleTeachers(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// ==========================
 // GET ALL TEACHERS
-// ==========================
 
 func GetTeachers(w http.ResponseWriter, r *http.Request) {
 
@@ -197,9 +192,8 @@ func GetTeacherByID(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(teacher)
 }
 
-// ==========================
 // GET FULL TEACHER DATA
-// ==========================
+
 
 func GetTeacherFull(w http.ResponseWriter, r *http.Request) {
 
