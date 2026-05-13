@@ -117,11 +117,12 @@ protected.HandleFunc("/fees", controllers.GetAllFees).Methods("GET")
 
 // transport
 
-protected.HandleFunc("/buses", controllers.CreateBus).Methods("POST")
-protected.HandleFunc("/buses", controllers.GetBuses).Methods("GET")
-protected.HandleFunc("/buses/{id}", controllers.GetBusByID).Methods("GET")
-protected.HandleFunc("/transport", controllers.AssignTransport).Methods("POST")
-protected.HandleFunc("/transport", controllers.GetTransportDetails).Methods("GET")
+r.HandleFunc("/buses", controllers.CreateBus).Methods("POST")
+r.HandleFunc("/buses", controllers.GetBuses).Methods("GET")
+r.HandleFunc("/buses/{id}", controllers.GetBusByID).Methods("GET")
+
+r.HandleFunc("/transport", controllers.AssignTransport).Methods("POST")
+r.HandleFunc("/transport", controllers.GetTransportDetails).Methods("GET")
 
 // STUDENTS
 protected.HandleFunc("/students", controllers.AddStudent).Methods("POST")
