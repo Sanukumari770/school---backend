@@ -4,7 +4,7 @@ import (
 	"net/http"
 )
 
-// ✅ Generic Role Middleware
+//  Generic Role Middleware
 func Authorize(allowedRoles ...string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 

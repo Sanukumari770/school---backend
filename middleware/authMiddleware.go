@@ -6,7 +6,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		// Temp bypass 
-		next.ServeHTTP(w, r)
+		// Tempo bypass 
+		next.ServeHTTP(w, r) // remove token and test api without this 
 	})
 }

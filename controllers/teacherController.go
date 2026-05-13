@@ -14,13 +14,15 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-var teacherCollection = config.DB.Collection("teachers")
-
-// add single teacher
+// ==========================
+// ADD SINGLE TEACHER
+// ==========================
 
 func AddTeacher(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
+
+	collection := config.DB.Collection("teachers")
 
 	var teacher models.Teacher
 
@@ -39,7 +41,7 @@ func AddTeacher(w http.ResponseWriter, r *http.Request) {
 	teacher.CreatedAt = now
 	teacher.UpdatedAt = now
 
-	_, err = teacherCollection.InsertOne(
+	_, err = collection.InsertOne(
 		context.Background(),
 		teacher,
 	)
@@ -56,12 +58,16 @@ func AddTeacher(w http.ResponseWriter, r *http.Request) {
 		"data":    teacher,
 	})
 }
- 
- // add multiple teachers
+
+// ==========================
+// ADD MULTIPLE TEACHERS
+// ==========================
 
 func AddMultipleTeachers(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
+
+	collection := config.DB.Collection("teachers")
 
 	var teachers []models.Teacher
 
@@ -70,12 +76,6 @@ func AddMultipleTeachers(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 
 		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	if len(teachers) == 0 {
-
-		http.Error(w, "No teachers data found", http.StatusBadRequest)
 		return
 	}
 
@@ -93,7 +93,7 @@ func AddMultipleTeachers(w http.ResponseWriter, r *http.Request) {
 		docs = append(docs, teachers[i])
 	}
 
-	result, err := teacherCollection.InsertMany(
+	result, err := collection.InsertMany(
 		context.Background(),
 		docs,
 	)
@@ -106,18 +106,19 @@ func AddMultipleTeachers(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(bson.M{
 		"success":      true,
-		"message":      "Multiple Teachers Added Successfully",
 		"inserted_ids": result.InsertedIDs,
-		"count":        len(result.InsertedIDs),
 	})
 }
 
-
-// get all teachers 
+// ==========================
+// GET ALL TEACHERS
+// ==========================
 
 func GetTeachers(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
+
+	collection := config.DB.Collection("teachers")
 
 	filter := bson.M{
 		"deleted_at": bson.M{
@@ -125,7 +126,7 @@ func GetTeachers(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	cursor, err := teacherCollection.Find(
+	cursor, err := collection.Find(
 		context.Background(),
 		filter,
 	)
@@ -160,12 +161,13 @@ func GetTeachers(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-
-// get single teacher 
+// get teacher by id 
 
 func GetTeacherByID(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
+
+	collection := config.DB.Collection("teachers")
 
 	id := mux.Vars(r)["id"]
 
@@ -179,7 +181,7 @@ func GetTeacherByID(w http.ResponseWriter, r *http.Request) {
 
 	var teacher models.Teacher
 
-	err = teacherCollection.FindOne(
+	err = collection.FindOne(
 		context.Background(),
 		bson.M{
 			"_id": objID,
@@ -193,6 +195,99 @@ func GetTeacherByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(teacher)
+}
+
+// ==========================
+// GET FULL TEACHER DATA
+// ==========================
+
+func GetTeacherFull(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("Content-Type", "application/json")
+
+	collection := config.DB.Collection("teachers")
+
+	id := mux.Vars(r)["id"]
+
+	objID, err := primitive.ObjectIDFromHex(id)
+
+	if err != nil {
+
+		http.Error(w, "Invalid Teacher ID", http.StatusBadRequest)
+		return
+	}
+
+	pipeline := bson.A{
+
+		bson.M{
+			"$match": bson.M{
+				"_id": objID,
+			},
+		},
+
+		// SUBJECTS
+		bson.M{
+			"$lookup": bson.M{
+				"from":         "subjects",
+				"localField":   "_id",
+				"foreignField": "teacher_id",
+				"as":           "subjects",
+			},
+		},
+
+		// CLASSES
+		bson.M{
+			"$lookup": bson.M{
+				"from":         "classes",
+				"localField":   "_id",
+				"foreignField": "teacher_id",
+				"as":           "classes",
+			},
+		},
+
+		// ASSIGNMENTS
+		bson.M{
+			"$lookup": bson.M{
+				"from":         "assignments",
+				"localField":   "_id",
+				"foreignField": "teacher_id",
+				"as":           "assignments",
+			},
+		},
+
+		// PAYROLL
+		bson.M{
+			"$lookup": bson.M{
+				"from":         "payroll",
+				"localField":   "_id",
+				"foreignField": "teacher_id",
+				"as":           "payroll",
+			},
+		},
+	}
+
+	cursor, err := collection.Aggregate(
+		context.Background(),
+		pipeline,
+	)
+
+	if err != nil {
+
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	var result []bson.M
+
+	err = cursor.All(context.Background(), &result)
+
+	if err != nil {
+
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(result)
 }
 
 
@@ -224,7 +319,9 @@ func UpdateTeacher(w http.ResponseWriter, r *http.Request) {
 
 	updateData["updated_at"] = time.Now()
 
-	_, err = teacherCollection.UpdateOne(
+	collection := config.DB.Collection("teachers")
+
+    _, err = collection.UpdateOne(
 		context.Background(),
 		bson.M{
 			"_id": objID,
@@ -252,6 +349,8 @@ func DeleteTeacher(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
+	collection := config.DB.Collection("teachers")
+
 	id := mux.Vars(r)["id"]
 
 	objID, err := primitive.ObjectIDFromHex(id)
@@ -264,7 +363,7 @@ func DeleteTeacher(w http.ResponseWriter, r *http.Request) {
 
 	now := time.Now()
 
-	_, err = teacherCollection.UpdateOne(
+	_, err = collection.UpdateOne(
 		context.Background(),
 		bson.M{
 			"_id": objID,
