@@ -89,6 +89,27 @@ func AssignTransport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// CHECK BUS EXISTS
+	var bus models.Bus
+
+	err = config.DB.Collection("buses").FindOne(
+		context.TODO(),
+		bson.M{
+			"_id": transport.BusID,
+		},
+	).Decode(&bus)
+
+	if err != nil {
+		http.Error(w, "Bus not found", 404)
+		return
+	}
+
+	// CHECK SEAT AVAILABLE
+	if bus.OccupiedSeats >= bus.TotalSeats {
+		http.Error(w, "Bus is Full", 400)
+		return
+	}
+
 	transport.ID = primitive.NewObjectID()
 	transport.CreatedAt = time.Now()
 
@@ -102,8 +123,8 @@ func AssignTransport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// increase occupied seats
-	_, _ = config.DB.Collection("buses").UpdateOne(
+	// INCREASE OCCUPIED SEAT
+	_, err = config.DB.Collection("buses").UpdateOne(
 		context.TODO(),
 		bson.M{
 			"_id": transport.BusID,
@@ -115,9 +136,14 @@ func AssignTransport(w http.ResponseWriter, r *http.Request) {
 		},
 	)
 
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
 	json.NewEncoder(w).Encode(bson.M{
 		"success": true,
-		"message": "Transport Assigned",
+		"message": "Transport Assigned Successfully",
 	})
 }
 
