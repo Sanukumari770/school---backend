@@ -25,7 +25,7 @@ type Student struct {
 
 	UpdatedAt time.Time `json:"updated_at" bson:"updatedAt"` // udated deatils time 
 
-	DeletedAt *time.Time `json:"deleted_at,omitempty" bson:"deletedAt,omitempty"`
+	DeletedAt *time.Time `json:"deleted_at,omitempty" bson:"deletedAt,omitempty"`// delet 
 
 	ParentID *primitive.ObjectID `json:"parent_id,omitempty" bson:"parent_id,omitempty"`  // fetch parents details fromm id 
 }

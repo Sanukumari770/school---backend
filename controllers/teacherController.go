@@ -121,7 +121,7 @@ func GetTeachers(w http.ResponseWriter, r *http.Request) {
 	collection := config.DB.Collection("teachers")
 
 	filter := bson.M{
-		"deleted_at": bson.M{
+		"deletedAt": bson.M{
 			"$exists": false,
 		},
 	}
@@ -208,6 +208,7 @@ func GetTeacherFull(w http.ResponseWriter, r *http.Request) {
 	collection := config.DB.Collection("teachers")
 
 	id := mux.Vars(r)["id"]
+
 
 	objID, err := primitive.ObjectIDFromHex(id)
 
