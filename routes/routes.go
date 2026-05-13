@@ -42,16 +42,16 @@ protected.HandleFunc("/exam", controllers.CreateExam).Methods("POST")
 protected.HandleFunc("/marks", controllers.AddMarks).Methods("POST")
 
 // Parent APIs
-protected.HandleFunc("/parent", controllers.CreateParent).Methods("POST")
+protected.HandleFunc("/parents", controllers.CreateParent).Methods("POST")
 protected.HandleFunc("/parents", controllers.GetParents).Methods("GET")
 protected.Handle(
-	"/parent/{id}",
-	middleware.Authorize("parent")(http.HandlerFunc(controllers.GetParentFull)),
+	"/parents/{id}",
+	middleware.Authorize("parents")(http.HandlerFunc(controllers.GetParentFull)),
 ).Methods("GET")
-
-protected.HandleFunc("/parent/{id}", controllers.UpdateParent).Methods("PUT")
-protected.HandleFunc("/parent/{id}", controllers.DeleteParent).Methods("DELETE")
-
+protected.HandleFunc("/parents/full/{id}", controllers.GetParentFull).Methods("GET")
+protected.HandleFunc("/parents/{id}", controllers.UpdateParent).Methods("PUT")
+protected.HandleFunc("/parents/{id}", controllers.DeleteParent).Methods("DELETE")
+protected.HandleFunc("/parents/multiple", controllers.AddMultipleParents).Methods("POST")
 
 
 // Parent protected

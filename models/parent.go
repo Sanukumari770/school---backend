@@ -2,18 +2,25 @@ package models
 
 import (
 	"time"
+
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Parent struct {
-	ID    primitive.ObjectID `bson:"_id,omitempty"`
-	Name  string             `bson:"name"`
-	Email string             `bson:"email"`
-	Phone string             `bson:"phone"`
 
-	StudentIDs []primitive.ObjectID `bson:"student_ids"`
+	ID primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
 
-	CreatedAt time.Time  `bson:"createdAt"`
-	UpdatedAt time.Time  `bson:"updatedAt"`
-	DeletedAt *time.Time `bson:"deletedAt,omitempty"`
+	Name string `json:"name" bson:"name"`
+
+	Email string `json:"email" bson:"email"`
+
+	Phone string `json:"phone" bson:"phone"`
+
+	StudentIDs []primitive.ObjectID `json:"student_ids" bson:"student_ids"`
+
+	CreatedAt time.Time `json:"created_at" bson:"created_at"`
+
+	UpdatedAt time.Time `json:"updated_at" bson:"updated_at"`
+
+	DeletedAt *time.Time `json:"deleted_at,omitempty" bson:"deleted_at,omitempty"`
 }

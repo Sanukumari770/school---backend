@@ -14,139 +14,368 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// ➤ Create Parent
+// ==========================
+// CREATE PARENT
+// ==========================
+
 func CreateParent(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("Content-Type", "application/json")
+
+	collection := config.DB.Collection("parents")
+
 	var parent models.Parent
 
-	json.NewDecoder(r.Body).Decode(&parent)
+	err := json.NewDecoder(r.Body).Decode(&parent)
+
+	if err != nil {
+
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	parent.ID = primitive.NewObjectID()
-	parent.CreatedAt = time.Now()
-	parent.UpdatedAt = time.Now()
 
-	_, err := config.DB.Collection("parents").InsertOne(context.TODO(), parent)
+	now := time.Now()
+
+	parent.CreatedAt = now
+	parent.UpdatedAt = now
+
+	_, err = collection.InsertOne(
+		context.Background(),
+		parent,
+	)
+
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	json.NewEncoder(w).Encode(parent)
+	json.NewEncoder(w).Encode(bson.M{
+		"success": true,
+		"message": "Parent Created Successfully",
+		"data": parent,
+	})
 }
 
-// ➤ Get All Parents
-func GetParents(w http.ResponseWriter, r *http.Request) {
+// add multiple parents 
 
-	cursor, err := config.DB.Collection("parents").Find(context.TODO(), bson.M{})
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
+func AddMultipleParents(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("Content-Type", "application/json")
+
+	collection := config.DB.Collection("parents")
 
 	var parents []models.Parent
-	cursor.All(context.TODO(), &parents)
 
-	json.NewEncoder(w).Encode(parents)
-}
+	err := json.NewDecoder(r.Body).Decode(&parents)
 
-// ➤ Get Parent FULL (with Students + data)
-func GetParentFull(w http.ResponseWriter, r *http.Request) {
+	if err != nil {
 
-	id := mux.Vars(r)["id"]
-	objID, _ := primitive.ObjectIDFromHex(id)
-
-	pipeline := []bson.M{
-		{"$match": bson.M{"_id": objID}},
-
-		// join students
-		{"$lookup": bson.M{
-			"from": "students",
-			"localField": "student_ids",
-			"foreignField": "_id",
-			"as": "students",
-		}},
-
-		// join attendance
-		{"$lookup": bson.M{
-			"from": "attendance",
-			"localField": "student_ids",
-			"foreignField": "student_id",
-			"as": "attendance",
-		}},
-
-		// join marks
-		{"$lookup": bson.M{
-			"from": "marks",
-			"localField": "student_ids",
-			"foreignField": "student_id",
-			"as": "marks",
-		}},
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
-	cursor, err := config.DB.Collection("parents").Aggregate(context.TODO(), pipeline)
+	if len(parents) == 0 {
+
+		http.Error(w, "No parents found", http.StatusBadRequest)
+		return
+	}
+
+	var docs []interface{}
+
+	for i := range parents {
+
+		parents[i].ID = primitive.NewObjectID()
+
+		now := time.Now()
+
+		parents[i].CreatedAt = now
+		parents[i].UpdatedAt = now
+
+		docs = append(docs, parents[i])
+	}
+
+	result, err := collection.InsertMany(
+		context.Background(),
+		docs,
+	)
+
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(bson.M{
+		"success": true,
+		"message": "Multiple Parents Added Successfully",
+		"inserted_ids": result.InsertedIDs,
+	})
+}
+
+
+// ==========================
+// GET ALL PARENTS
+// ==========================
+
+func GetParents(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("Content-Type", "application/json")
+
+	collection := config.DB.Collection("parents")
+
+	filter := bson.M{
+		"deleted_at": bson.M{
+			"$exists": false,
+		},
+	}
+
+	cursor, err := collection.Find(
+		context.Background(),
+		filter,
+	)
+
+	if err != nil {
+
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	defer cursor.Close(context.Background())
+
+	var parents []models.Parent
+
+	err = cursor.All(context.Background(), &parents)
+
+	if err != nil {
+
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if parents == nil {
+
+		parents = []models.Parent{}
+	}
+
+	json.NewEncoder(w).Encode(bson.M{
+		"success": true,
+		"count": len(parents),
+		"data": parents,
+	})
+}
+
+// ==========================
+// GET FULL PARENT DATA
+// ==========================
+
+func GetParentFull(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("Content-Type", "application/json")
+
+	collection := config.DB.Collection("parents")
+
+	id := mux.Vars(r)["id"]
+
+	objID, err := primitive.ObjectIDFromHex(id)
+
+	if err != nil {
+
+		http.Error(w, "Invalid Parent ID", http.StatusBadRequest)
+		return
+	}
+
+	pipeline := bson.A{
+
+		bson.M{
+			"$match": bson.M{
+				"_id": objID,
+			},
+		},
+
+		// STUDENTS
+		bson.M{
+			"$lookup": bson.M{
+				"from": "students",
+				"localField": "student_ids",
+				"foreignField": "_id",
+				"as": "students",
+			},
+		},
+
+		// ATTENDANCE
+		bson.M{
+			"$lookup": bson.M{
+				"from": "attendance",
+				"localField": "student_ids",
+				"foreignField": "student_id",
+				"as": "attendance",
+			},
+		},
+
+		// MARKS
+		bson.M{
+			"$lookup": bson.M{
+				"from": "marks",
+				"localField": "student_ids",
+				"foreignField": "student_id",
+				"as": "marks",
+			},
+		},
+
+		// FEES
+		bson.M{
+			"$lookup": bson.M{
+				"from": "fees",
+				"localField": "student_ids",
+				"foreignField": "student_id",
+				"as": "fees",
+			},
+		},
+
+		// TRANSPORT
+		bson.M{
+			"$lookup": bson.M{
+				"from": "transport",
+				"localField": "student_ids",
+				"foreignField": "student_id",
+				"as": "transport",
+			},
+		},
+
+		// ASSIGNMENTS
+		bson.M{
+			"$lookup": bson.M{
+				"from": "assignments",
+				"localField": "student_ids",
+				"foreignField": "student_id",
+				"as": "assignments",
+			},
+		},
+	}
+
+	cursor, err := collection.Aggregate(
+		context.Background(),
+		pipeline,
+	)
+
+	if err != nil {
+
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	var result []bson.M
-	cursor.All(context.TODO(), &result)
+
+	err = cursor.All(context.Background(), &result)
+
+	if err != nil {
+
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	json.NewEncoder(w).Encode(result)
 }
 
-// ➤ Update Parent
+// ==========================
+// UPDATE PARENT
+// ==========================
+
 func UpdateParent(w http.ResponseWriter, r *http.Request) {
 
+	w.Header().Set("Content-Type", "application/json")
+
+	collection := config.DB.Collection("parents")
+
 	id := mux.Vars(r)["id"]
-	objID, _ := primitive.ObjectIDFromHex(id)
 
-	var parent models.Parent
-	json.NewDecoder(r.Body).Decode(&parent)
-
-	parent.UpdatedAt = time.Now()
-
-	update := bson.M{
-		"$set": parent,
-	}
-
-	_, err := config.DB.Collection("parents").UpdateOne(
-		context.TODO(),
-		bson.M{"_id": objID},
-		update,
-	)
+	objID, err := primitive.ObjectIDFromHex(id)
 
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+
+		http.Error(w, "Invalid Parent ID", http.StatusBadRequest)
 		return
 	}
 
-	json.NewEncoder(w).Encode("Updated")
+	var updateData bson.M
+
+	err = json.NewDecoder(r.Body).Decode(&updateData)
+
+	if err != nil {
+
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	updateData["updated_at"] = time.Now()
+
+	_, err = collection.UpdateOne(
+		context.Background(),
+		bson.M{
+			"_id": objID,
+		},
+		bson.M{
+			"$set": updateData,
+		},
+	)
+
+	if err != nil {
+
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(bson.M{
+		"success": true,
+		"message": "Parent Updated Successfully",
+	})
 }
 
-// ➤ Delete Parent (Soft Delete)
+// ==========================
+// DELETE PARENT
+// ==========================
+
 func DeleteParent(w http.ResponseWriter, r *http.Request) {
 
+	w.Header().Set("Content-Type", "application/json")
+
+	collection := config.DB.Collection("parents")
+
 	id := mux.Vars(r)["id"]
-	objID, _ := primitive.ObjectIDFromHex(id)
+
+	objID, err := primitive.ObjectIDFromHex(id)
+
+	if err != nil {
+
+		http.Error(w, "Invalid Parent ID", http.StatusBadRequest)
+		return
+	}
 
 	now := time.Now()
 
-	update := bson.M{
-		"$set": bson.M{
-			"deletedAt": now,
+	_, err = collection.UpdateOne(
+		context.Background(),
+		bson.M{
+			"_id": objID,
 		},
-	}
-
-	_, err := config.DB.Collection("parents").UpdateOne(
-		context.TODO(),
-		bson.M{"_id": objID},
-		update,
+		bson.M{
+			"$set": bson.M{
+				"deleted_at": now,
+			},
+		},
 	)
 
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	json.NewEncoder(w).Encode("Deleted")
+	json.NewEncoder(w).Encode(bson.M{
+		"success": true,
+		"message": "Parent Deleted Successfully",
+	})
 }
