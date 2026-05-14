@@ -141,13 +141,13 @@ protected.HandleFunc("/students/{id}", controllers.DeleteStudent).Methods("DELET
 
 
 // LIBRARY
-protected.HandleFunc("/books", controllers.AddBook).Methods("POST")
-protected.HandleFunc("/books", controllers.GetBooks).Methods("GET")
+r.HandleFunc("/books", controllers.AddBook).Methods("POST")
+r.HandleFunc("/books", controllers.GetBooks).Methods("GET")
 
-protected.HandleFunc("/library/issue", controllers.IssueBook).Methods("POST")
+r.HandleFunc("/library/issue", controllers.IssueBook).Methods("POST")
 
-protected.HandleFunc("/library/return", controllers.ReturnBook).Methods("PUT")
+r.HandleFunc("/library/return", controllers.ReturnBook).Methods("PUT")
 
-protected.HandleFunc("/library/details", controllers.GetLibraryDetails).Methods("GET")
+r.HandleFunc("/library/details", controllers.GetLibraryDetails).Methods("GET")
 
 }
