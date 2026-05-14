@@ -17,6 +17,10 @@ type Teacher struct {
 
 	Class string `json:"class" bson:"class"` // assign class fetch from class id 
 
+	Qualification string `json:"qualification" bson:"qualification"`
+
+	Experience string `json:"experience" bson:"experience"`
+
 	//  this struc for time mention of created and deleted , updated 
 
 	CreatedAt time.Time `json:"createdAt" bson:"createdAt"`
