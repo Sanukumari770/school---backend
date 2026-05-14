@@ -25,7 +25,7 @@ func AddTeacher(w http.ResponseWriter, r *http.Request) {
 
 	var teacher models.Teacher
 
-	err := json.NewDecoder(r.Body).Decode(&teacher)
+	err := json.NewDecoder(r.Body).Decode(&teacher) // any new feilds add in models controller autaomatically fetch through this line 
 
 	if err != nil {
 
