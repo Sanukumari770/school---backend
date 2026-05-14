@@ -138,4 +138,16 @@ protected.HandleFunc("/students/{id}", controllers.GetStudentByID).Methods("GET"
 protected.HandleFunc("/students/{id}", controllers.UpdateStudent).Methods("PUT")
 
 protected.HandleFunc("/students/{id}", controllers.DeleteStudent).Methods("DELETE")
+
+
+// LIBRARY
+protected.HandleFunc("/books", controllers.AddBook).Methods("POST")
+protected.HandleFunc("/books", controllers.GetBooks).Methods("GET")
+
+protected.HandleFunc("/library/issue", controllers.IssueBook).Methods("POST")
+
+protected.HandleFunc("/library/return", controllers.ReturnBook).Methods("PUT")
+
+protected.HandleFunc("/library/details", controllers.GetLibraryDetails).Methods("GET")
+
 }

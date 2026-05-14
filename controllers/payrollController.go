@@ -16,7 +16,7 @@ import (
 
 
 // =======================
-// ✅ ADD SALARY
+// ADD SALARY
 // =======================
 func AddSalary(w http.ResponseWriter, r *http.Request) {
 

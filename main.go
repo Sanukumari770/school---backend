@@ -7,7 +7,7 @@ import (
 
 	"school/config"
 	"school/routes"
-
+// for git push up
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	"github.com/rs/cors"
