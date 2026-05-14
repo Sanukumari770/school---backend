@@ -312,7 +312,7 @@ func UpdateTeacher(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updateData["updated_at"] = time.Now()
+	updateData["updatedAt"] = time.Now()
 
 	collection := config.DB.Collection("teachers")
 
@@ -365,7 +365,7 @@ func DeleteTeacher(w http.ResponseWriter, r *http.Request) {
 		},
 		bson.M{
 			"$set": bson.M{
-				"deleted_at": now,
+				"deletedAt": now,
 			},
 		},
 	)
