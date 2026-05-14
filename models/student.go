@@ -21,6 +21,10 @@ type Student struct {
 
 	Section string `json:"section" bson:"section"` // section with class 
 
+	FatherName string `json:"father_name" bson:"father_name"`
+
+	FatherEmail string `json:"father_email" bson:"father_email"`
+
 	CreatedAt time.Time `json:"created_at" bson:"createdAt"`  // students adding time 
 
 	UpdatedAt time.Time `json:"updated_at" bson:"updatedAt"` // udated deatils time 
