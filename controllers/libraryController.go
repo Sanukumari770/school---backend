@@ -48,6 +48,52 @@ func AddBook(w http.ResponseWriter, r *http.Request) {
 }
 
 
+// ADD MULTIPLE BOOKS
+
+func AddMultipleBooks(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("Content-Type", "application/json")
+
+	var books []models.Book
+
+	err := json.NewDecoder(r.Body).Decode(&books)
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
+
+	var docs []interface{}
+
+	for i := range books {
+
+		books[i].ID = primitive.NewObjectID()
+		books[i].CreatedAt = time.Now()
+
+		// agar available_books empty aaye
+		if books[i].AvailableBooks == 0 {
+			books[i].AvailableBooks = books[i].TotalBooks
+		}
+
+		docs = append(docs, books[i])
+	}
+
+	_, err = config.DB.Collection("books").InsertMany(
+		context.TODO(),
+		docs,
+	)
+
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	json.NewEncoder(w).Encode(bson.M{
+		"success": true,
+		"message": "Multiple Books Added Successfully",
+		"total_books_added": len(books),
+	})
+}
+
 // GET BOOKS
 
 func GetBooks(w http.ResponseWriter, r *http.Request) {

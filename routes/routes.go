@@ -143,7 +143,7 @@ protected.HandleFunc("/students/{id}", controllers.DeleteStudent).Methods("DELET
 // LIBRARY
 r.HandleFunc("/books", controllers.AddBook).Methods("POST")
 r.HandleFunc("/books", controllers.GetBooks).Methods("GET")
-
+r.HandleFunc("/books/bulk", controllers.AddMultipleBooks).Methods("POST")
 r.HandleFunc("/library/issue", controllers.IssueBook).Methods("POST")
 
 r.HandleFunc("/library/return", controllers.ReturnBook).Methods("PUT")
