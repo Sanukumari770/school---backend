@@ -46,6 +46,47 @@ func CreateBus(w http.ResponseWriter, r *http.Request) {
 		"message": "Bus Created",
 	})
 }
+
+// create multiple buses 
+
+func AddMultipleBuses(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("Content-Type", "application/json")
+
+	var buses []models.Bus
+
+	err := json.NewDecoder(r.Body).Decode(&buses)
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
+
+	var docs []interface{}
+
+	for i := range buses {
+
+		buses[i].ID = primitive.NewObjectID()
+		buses[i].CreatedAt = time.Now()
+
+		docs = append(docs, buses[i])
+	}
+
+	_, err = config.DB.Collection("buses").InsertMany(
+		context.TODO(),
+		docs,
+	)
+
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	json.NewEncoder(w).Encode(bson.M{
+		"success": true,
+		"message": "Multiple Buses Added",
+	})
+}
+
 // GET ALL BUSES
 
 func GetBuses(w http.ResponseWriter, r *http.Request) {
@@ -165,6 +206,16 @@ func GetTransportDetails(w http.ResponseWriter, r *http.Request) {
 			},
 		},
 
+
+		// JOIN PARENT
+bson.M{
+	"$lookup": bson.M{
+		"from": "parents",
+		"localField": "parent_id",
+		"foreignField": "_id",
+		"as": "parent",
+	},
+},
 		// JOIN BUS
 		bson.M{
 			"$lookup": bson.M{
