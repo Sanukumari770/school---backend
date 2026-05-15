@@ -17,9 +17,9 @@ type Book struct {
 
 	Category string `json:"category" bson:"category"`
 
-	TotalBooks int `json:"total_books" bson:"total_books"`
+	TotalCopies int `json:"total_copies" bson:"total_copies"`
 
-	AvailableBooks int `json:"available_books" bson:"available_books"`
+	AvailableCopies int `json:"available_copies" bson:"available_copies"`
 
 	CreatedAt time.Time `json:"createdAt" bson:"createdAt"`
 }

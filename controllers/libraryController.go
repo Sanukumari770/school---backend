@@ -70,8 +70,8 @@ func AddMultipleBooks(w http.ResponseWriter, r *http.Request) {
 		books[i].CreatedAt = time.Now()
 
 		// agar available_books empty aaye
-		if books[i].AvailableBooks == 0 {
-			books[i].AvailableBooks = books[i].TotalBooks
+		if books[i].AvailableCopies == 0 {
+			books[i].AvailableCopies = books[i].TotalCopies
 		}
 
 		docs = append(docs, books[i])
@@ -154,7 +154,7 @@ func IssueBook(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// CHECK AVAILABLE
-	if book.AvailableBooks <= 0 {
+	if book.AvailableCopies <= 0 {
 		http.Error(w, "Book not available", 400)
 		return
 	}
