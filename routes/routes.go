@@ -155,8 +155,6 @@ r.HandleFunc("/exam/bulk", controllers.AddMultipleExams).Methods("POST")
 
 r.HandleFunc("/exam", controllers.GetExams).Methods("GET")
 
-r.HandleFunc("/exam/details", controllers.GetExamDetails).Methods("GET")
-
 r.HandleFunc("/exam/{id}", controllers.GetExamByID).Methods("GET")
 
 r.HandleFunc("/exam/{id}", controllers.UpdateExam).Methods("PUT")

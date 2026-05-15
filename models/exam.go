@@ -23,11 +23,7 @@ type Exam struct {
 	PassMark int `json:"pass_mark" bson:"pass_mark"`
 
 	Status string `json:"status" bson:"status"`
-
-	TeacherID primitive.ObjectID `json:"teacher_id" bson:"teacher_id"`
-
-	StudentID primitive.ObjectID `json:"student_id" bson:"student_id"`
-
+	
 	CreatedAt time.Time `json:"createdAt" bson:"createdAt"`
 
 	UpdatedAt time.Time `json:"updatedAt" bson:"updatedAt"`

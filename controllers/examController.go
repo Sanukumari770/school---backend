@@ -25,43 +25,15 @@ func CreateExam(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&exam)
 	if err != nil {
+
 		http.Error(w, err.Error(), 400)
-		return
-	}
-
-	// CHECK TEACHER EXISTS
-	var teacher bson.M
-
-	err = config.DB.Collection("teachers").FindOne(
-		context.TODO(),
-		bson.M{
-			"_id": exam.TeacherID,
-		},
-	).Decode(&teacher)
-
-	if err != nil {
-		http.Error(w, "Teacher not found", 404)
-		return
-	}
-
-	// CHECK STUDENT EXISTS
-	var student bson.M
-
-	err = config.DB.Collection("students").FindOne(
-		context.TODO(),
-		bson.M{
-			"_id": exam.StudentID,
-		},
-	).Decode(&student)
-
-	if err != nil {
-		http.Error(w, "Student not found", 404)
 		return
 	}
 
 	exam.ID = primitive.NewObjectID()
 
 	exam.CreatedAt = time.Now()
+
 	exam.UpdatedAt = time.Now()
 
 	_, err = config.DB.Collection("exams").InsertOne(
@@ -70,6 +42,7 @@ func CreateExam(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err != nil {
+
 		http.Error(w, err.Error(), 500)
 		return
 	}
@@ -91,6 +64,7 @@ func AddMultipleExams(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&exams)
 	if err != nil {
+
 		http.Error(w, err.Error(), 400)
 		return
 	}
@@ -102,6 +76,7 @@ func AddMultipleExams(w http.ResponseWriter, r *http.Request) {
 		exams[i].ID = primitive.NewObjectID()
 
 		exams[i].CreatedAt = time.Now()
+
 		exams[i].UpdatedAt = time.Now()
 
 		docs = append(docs, exams[i])
@@ -113,6 +88,7 @@ func AddMultipleExams(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err != nil {
+
 		http.Error(w, err.Error(), 500)
 		return
 	}
@@ -137,6 +113,7 @@ func GetExams(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err != nil {
+
 		http.Error(w, err.Error(), 500)
 		return
 	}
@@ -148,6 +125,7 @@ func GetExams(w http.ResponseWriter, r *http.Request) {
 	cursor.All(context.TODO(), &exams)
 
 	if exams == nil {
+
 		exams = []models.Exam{}
 	}
 
@@ -165,6 +143,7 @@ func GetExamByID(w http.ResponseWriter, r *http.Request) {
 
 	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
+
 		http.Error(w, "Invalid ID", 400)
 		return
 	}
@@ -179,6 +158,7 @@ func GetExamByID(w http.ResponseWriter, r *http.Request) {
 	).Decode(&exam)
 
 	if err != nil {
+
 		http.Error(w, "Exam not found", 404)
 		return
 	}
@@ -197,6 +177,7 @@ func UpdateExam(w http.ResponseWriter, r *http.Request) {
 
 	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
+
 		http.Error(w, "Invalid ID", 400)
 		return
 	}
@@ -205,6 +186,7 @@ func UpdateExam(w http.ResponseWriter, r *http.Request) {
 
 	err = json.NewDecoder(r.Body).Decode(&exam)
 	if err != nil {
+
 		http.Error(w, err.Error(), 400)
 		return
 	}
@@ -218,19 +200,28 @@ func UpdateExam(w http.ResponseWriter, r *http.Request) {
 		},
 		bson.M{
 			"$set": bson.M{
+
 				"exam_name": exam.ExamName,
+
 				"class_name": exam.ClassName,
+
 				"subject": exam.Subject,
+
 				"exam_date": exam.ExamDate,
+
 				"max_marks": exam.MaxMarks,
+
 				"pass_mark": exam.PassMark,
+
 				"status": exam.Status,
+
 				"updatedAt": exam.UpdatedAt,
 			},
 		},
 	)
 
 	if err != nil {
+
 		http.Error(w, err.Error(), 500)
 		return
 	}
@@ -252,6 +243,7 @@ func DeleteExam(w http.ResponseWriter, r *http.Request) {
 
 	objID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
+
 		http.Error(w, "Invalid ID", 400)
 		return
 	}
@@ -264,6 +256,7 @@ func DeleteExam(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err != nil {
+
 		http.Error(w, err.Error(), 500)
 		return
 	}
@@ -272,55 +265,4 @@ func DeleteExam(w http.ResponseWriter, r *http.Request) {
 		"success": true,
 		"message": "Exam Deleted Successfully",
 	})
-}
-
-
-// FULL EXAM DETAILS
-
-func GetExamDetails(w http.ResponseWriter, r *http.Request) {
-
-	w.Header().Set("Content-Type", "application/json")
-
-	pipeline := bson.A{
-
-		// JOIN STUDENT
-		bson.M{
-			"$lookup": bson.M{
-				"from": "students",
-				"localField": "student_id",
-				"foreignField": "_id",
-				"as": "student",
-			},
-		},
-
-		// JOIN TEACHER
-		bson.M{
-			"$lookup": bson.M{
-				"from": "teachers",
-				"localField": "teacher_id",
-				"foreignField": "_id",
-				"as": "teacher",
-			},
-		},
-	}
-
-	cursor, err := config.DB.Collection("exams").Aggregate(
-		context.TODO(),
-		pipeline,
-	)
-
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
-	}
-
-	var result []bson.M
-
-	cursor.All(context.TODO(), &result)
-
-	if result == nil {
-		result = []bson.M{}
-	}
-
-	json.NewEncoder(w).Encode(result)
 }
