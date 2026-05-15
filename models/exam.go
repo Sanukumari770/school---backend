@@ -1,12 +1,34 @@
 package models
 
-import "go.mongodb.org/mongo-driver/bson/primitive"
+import (
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
 
 type Exam struct {
-	ID        primitive.ObjectID `bson:"_id,omitempty"`
-	Name      string             `bson:"name"`
-	SubjectID string             `bson:"subjectId"`
-	TotalMarks int               `bson:"totalMarks"`
-	ClassID primitive.ObjectID `bson:"class_id"`
-	Date    string             `bson:"date"`
+
+	ID primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
+
+	ExamName string `json:"exam_name" bson:"exam_name"`
+
+	ClassName string `json:"class_name" bson:"class_name"`
+
+	Subject string `json:"subject" bson:"subject"`
+
+	ExamDate string `json:"exam_date" bson:"exam_date"`
+
+	MaxMarks int `json:"max_marks" bson:"max_marks"`
+
+	PassMark int `json:"pass_mark" bson:"pass_mark"`
+
+	Status string `json:"status" bson:"status"`
+
+	TeacherID primitive.ObjectID `json:"teacher_id" bson:"teacher_id"`
+
+	StudentID primitive.ObjectID `json:"student_id" bson:"student_id"`
+
+	CreatedAt time.Time `json:"createdAt" bson:"createdAt"`
+
+	UpdatedAt time.Time `json:"updatedAt" bson:"updatedAt"`
 }

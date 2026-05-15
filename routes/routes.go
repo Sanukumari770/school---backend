@@ -29,10 +29,6 @@ func SetupRoutes(r *mux.Router) {
 	// Attendance
 protected.HandleFunc("/attendance", controllers.AddAttendance).Methods("POST")
 
-
-// Exam
-protected.HandleFunc("/exam", controllers.CreateExam).Methods("POST")
-
 // Marks
 protected.HandleFunc("/marks", controllers.AddMarks).Methods("POST")
 
@@ -150,4 +146,20 @@ r.HandleFunc("/library/return", controllers.ReturnBook).Methods("PUT")
 
 r.HandleFunc("/library/details", controllers.GetLibraryDetails).Methods("GET")
 
+
+// EXAM ROUTES
+
+r.HandleFunc("/exam", controllers.CreateExam).Methods("POST")
+
+r.HandleFunc("/exam/bulk", controllers.AddMultipleExams).Methods("POST")
+
+r.HandleFunc("/exam", controllers.GetExams).Methods("GET")
+
+r.HandleFunc("/exam/details", controllers.GetExamDetails).Methods("GET")
+
+r.HandleFunc("/exam/{id}", controllers.GetExamByID).Methods("GET")
+
+r.HandleFunc("/exam/{id}", controllers.UpdateExam).Methods("PUT")
+
+r.HandleFunc("/exam/{id}", controllers.DeleteExam).Methods("DELETE")
 }
