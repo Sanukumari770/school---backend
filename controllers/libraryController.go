@@ -13,8 +13,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-
-// ADD BOOK
+// ADD SINGLE BOOK
 
 func AddBook(w http.ResponseWriter, r *http.Request) {
 
@@ -31,6 +30,11 @@ func AddBook(w http.ResponseWriter, r *http.Request) {
 	book.ID = primitive.NewObjectID()
 	book.CreatedAt = time.Now()
 
+	// agar available copies nahi bheja
+	if book.AvailableCopies == 0 {
+		book.AvailableCopies = book.TotalCopies
+	}
+
 	_, err = config.DB.Collection("books").InsertOne(
 		context.TODO(),
 		book,
@@ -46,7 +50,6 @@ func AddBook(w http.ResponseWriter, r *http.Request) {
 		"message": "Book Added Successfully",
 	})
 }
-
 
 // ADD MULTIPLE BOOKS
 
@@ -69,7 +72,6 @@ func AddMultipleBooks(w http.ResponseWriter, r *http.Request) {
 		books[i].ID = primitive.NewObjectID()
 		books[i].CreatedAt = time.Now()
 
-		// agar available_books empty aaye
 		if books[i].AvailableCopies == 0 {
 			books[i].AvailableCopies = books[i].TotalCopies
 		}
@@ -94,7 +96,7 @@ func AddMultipleBooks(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// GET BOOKS
+// GET ALL BOOKS
 
 func GetBooks(w http.ResponseWriter, r *http.Request) {
 
@@ -123,7 +125,6 @@ func GetBooks(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(books)
 }
 
-
 // ISSUE BOOK
 
 func IssueBook(w http.ResponseWriter, r *http.Request) {
@@ -138,7 +139,7 @@ func IssueBook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// CHECK BOOK
+	// CHECK BOOK EXISTS
 	var book models.Book
 
 	err = config.DB.Collection("books").FindOne(
@@ -153,7 +154,7 @@ func IssueBook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// CHECK AVAILABLE
+	// CHECK AVAILABLE COPIES
 	if book.AvailableCopies <= 0 {
 		http.Error(w, "Book not available", 400)
 		return
@@ -174,7 +175,7 @@ func IssueBook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// DECREASE AVAILABLE BOOK
+	// DECREASE AVAILABLE COPIES
 	_, err = config.DB.Collection("books").UpdateOne(
 		context.TODO(),
 		bson.M{
@@ -182,7 +183,7 @@ func IssueBook(w http.ResponseWriter, r *http.Request) {
 		},
 		bson.M{
 			"$inc": bson.M{
-				"available_books": -1,
+				"available_copies": -1,
 			},
 		},
 	)
@@ -197,7 +198,6 @@ func IssueBook(w http.ResponseWriter, r *http.Request) {
 		"message": "Book Issued Successfully",
 	})
 }
-
 
 // RETURN BOOK
 
@@ -235,7 +235,7 @@ func ReturnBook(w http.ResponseWriter, r *http.Request) {
 		},
 		bson.M{
 			"$set": bson.M{
-				"status": "Returned",
+				"status":      "Returned",
 				"return_date": time.Now(),
 			},
 		},
@@ -246,7 +246,7 @@ func ReturnBook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// INCREASE AVAILABLE BOOK
+	// INCREASE AVAILABLE COPIES
 	_, err = config.DB.Collection("books").UpdateOne(
 		context.TODO(),
 		bson.M{
@@ -254,17 +254,21 @@ func ReturnBook(w http.ResponseWriter, r *http.Request) {
 		},
 		bson.M{
 			"$inc": bson.M{
-				"available_books": 1,
+				"available_copies": 1,
 			},
 		},
 	)
+
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
 
 	json.NewEncoder(w).Encode(bson.M{
 		"success": true,
 		"message": "Book Returned Successfully",
 	})
 }
-
 
 // FULL LIBRARY DETAILS
 
@@ -274,21 +278,23 @@ func GetLibraryDetails(w http.ResponseWriter, r *http.Request) {
 
 	pipeline := bson.A{
 
+		// JOIN STUDENTS
 		bson.M{
 			"$lookup": bson.M{
-				"from": "students",
-				"localField": "student_id",
+				"from":         "students",
+				"localField":   "student_id",
 				"foreignField": "_id",
-				"as": "student",
+				"as":           "student",
 			},
 		},
 
+		// JOIN BOOKS
 		bson.M{
 			"$lookup": bson.M{
-				"from": "books",
-				"localField": "book_id",
+				"from":         "books",
+				"localField":   "book_id",
 				"foreignField": "_id",
-				"as": "book",
+				"as":           "book",
 			},
 		},
 	}
