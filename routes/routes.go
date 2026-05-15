@@ -95,21 +95,11 @@ protected.HandleFunc("/classes", controllers.GetClasses).Methods("GET")
 // BULK 
 protected.HandleFunc("/subjects/bulk", controllers.AddMultipleSubjects).Methods("POST")
 
-
-// ASSIGNMENT
-protected.HandleFunc("/assignment", controllers.CreateAssignment).Methods("POST")
-protected.HandleFunc("/submit", controllers.SubmitAssignment).Methods("POST")
-
-// SUBMISSION
-protected.HandleFunc("/submit", controllers.SubmitAssignment).Methods("POST")
-
 // fees
 protected.HandleFunc("/create-fee", controllers.CreateFee).Methods("POST")
 protected.HandleFunc("/create-bulk-fee", controllers.CreateBulkFee).Methods("POST")
 protected.HandleFunc("/pay-fee", controllers.PayFee).Methods("POST")
 protected.HandleFunc("/fees", controllers.GetAllFees).Methods("GET")
-
-
 
 // transport
 
@@ -160,4 +150,22 @@ r.HandleFunc("/exam/{id}", controllers.GetExamByID).Methods("GET")
 r.HandleFunc("/exam/{id}", controllers.UpdateExam).Methods("PUT")
 
 r.HandleFunc("/exam/{id}", controllers.DeleteExam).Methods("DELETE")
+
+
+// ASSIGNMENT ROUTES
+
+r.HandleFunc("/assignment", controllers.CreateAssignment).Methods("POST")
+
+r.HandleFunc("/assignment/bulk", controllers.AddMultipleAssignments).Methods("POST")
+
+r.HandleFunc("/assignment", controllers.GetAssignments).Methods("GET")
+
+r.HandleFunc("/assignment/{id}", controllers.GetAssignmentByID).Methods("GET")
+
+r.HandleFunc("/assignment/{id}", controllers.UpdateAssignment).Methods("PUT")
+
+r.HandleFunc("/assignment/{id}", controllers.DeleteAssignment).Methods("DELETE")
+
+r.HandleFunc("/submit", controllers.SubmitAssignment).Methods("POST")
+
 }

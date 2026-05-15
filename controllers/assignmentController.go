@@ -9,70 +9,316 @@ import (
 	"school/config"
 	"school/models"
 
+	"github.com/gorilla/mux"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 
-// =======================
-//  CREATE ASSIGNMENT
-// =======================
+// CREATE ASSIGNMENT
+
 func CreateAssignment(w http.ResponseWriter, r *http.Request) {
 
-	var input struct {
-		Title     string `json:"title"`
-		SubjectID string `json:"subject_id"`
-		TeacherID string `json:"teacher_id"`
-		ClassID   string `json:"class_id"`
-		DueDate   string `json:"due_date"`
+	w.Header().Set("Content-Type", "application/json")
+
+	var assignment models.Assignment
+
+	err := json.NewDecoder(r.Body).Decode(&assignment)
+	if err != nil {
+
+		http.Error(w, err.Error(), 400)
+		return
 	}
 
-	json.NewDecoder(r.Body).Decode(&input)
+	assignment.ID = primitive.NewObjectID()
 
-	subjectID, _ := primitive.ObjectIDFromHex(input.SubjectID)
-	teacherID, _ := primitive.ObjectIDFromHex(input.TeacherID)
-	classID, _ := primitive.ObjectIDFromHex(input.ClassID)
+	assignment.CreatedAt = time.Now()
 
-	dueDate, _ := time.Parse("2006-01-02", input.DueDate)
+	assignment.UpdatedAt = time.Now()
 
-	data := models.Assignment{
-		Title:     input.Title,
-		SubjectID: subjectID,
-		TeacherID: teacherID,
-		ClassID:   classID,
-		DueDate:   dueDate,
-		CreatedAt: time.Now(),
+	// DEFAULT VALUE
+	assignment.SubmittedCount = 0
+
+	_, err = config.DB.Collection("assignments").InsertOne(
+		context.TODO(),
+		assignment,
+	)
+
+	if err != nil {
+
+		http.Error(w, err.Error(), 500)
+		return
 	}
 
-	res, _ := config.DB.Collection("assignments").InsertOne(context.TODO(), data)
-
-	json.NewEncoder(w).Encode(res)
+	json.NewEncoder(w).Encode(bson.M{
+		"success": true,
+		"message": "Assignment Created Successfully",
+	})
 }
 
 
+// ADD MULTIPLE ASSIGNMENTS
 
-//  SUBMIT ASSIGNMENT
+func AddMultipleAssignments(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("Content-Type", "application/json")
+
+	var assignments []models.Assignment
+
+	err := json.NewDecoder(r.Body).Decode(&assignments)
+	if err != nil {
+
+		http.Error(w, err.Error(), 400)
+		return
+	}
+
+	var docs []interface{}
+
+	for i := range assignments {
+
+		assignments[i].ID = primitive.NewObjectID()
+
+		assignments[i].CreatedAt = time.Now()
+
+		assignments[i].UpdatedAt = time.Now()
+
+		assignments[i].SubmittedCount = 0
+
+		docs = append(docs, assignments[i])
+	}
+
+	_, err = config.DB.Collection("assignments").InsertMany(
+		context.TODO(),
+		docs,
+	)
+
+	if err != nil {
+
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	json.NewEncoder(w).Encode(bson.M{
+		"success": true,
+		"message": "Multiple Assignments Added Successfully",
+		"total_assignments_added": len(assignments),
+	})
+}
+
+
+// GET ALL ASSIGNMENTS
+
+func GetAssignments(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("Content-Type", "application/json")
+
+	cursor, err := config.DB.Collection("assignments").Find(
+		context.TODO(),
+		bson.M{},
+	)
+
+	if err != nil {
+
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	defer cursor.Close(context.TODO())
+
+	var assignments []models.Assignment
+
+	cursor.All(context.TODO(), &assignments)
+
+	if assignments == nil {
+
+		assignments = []models.Assignment{}
+	}
+
+	json.NewEncoder(w).Encode(assignments)
+}
+
+
+// GET SINGLE ASSIGNMENT
+
+func GetAssignmentByID(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("Content-Type", "application/json")
+
+	id := mux.Vars(r)["id"]
+
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+
+		http.Error(w, "Invalid ID", 400)
+		return
+	}
+
+	var assignment models.Assignment
+
+	err = config.DB.Collection("assignments").FindOne(
+		context.TODO(),
+		bson.M{
+			"_id": objID,
+		},
+	).Decode(&assignment)
+
+	if err != nil {
+
+		http.Error(w, "Assignment not found", 404)
+		return
+	}
+
+	json.NewEncoder(w).Encode(assignment)
+}
+
+
+// UPDATE ASSIGNMENT
+
+func UpdateAssignment(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("Content-Type", "application/json")
+
+	id := mux.Vars(r)["id"]
+
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+
+		http.Error(w, "Invalid ID", 400)
+		return
+	}
+
+	var assignment models.Assignment
+
+	err = json.NewDecoder(r.Body).Decode(&assignment)
+	if err != nil {
+
+		http.Error(w, err.Error(), 400)
+		return
+	}
+
+	assignment.UpdatedAt = time.Now()
+
+	_, err = config.DB.Collection("assignments").UpdateOne(
+		context.TODO(),
+		bson.M{
+			"_id": objID,
+		},
+		bson.M{
+			"$set": bson.M{
+
+				"title": assignment.Title,
+
+				"subject": assignment.Subject,
+
+				"className": assignment.ClassName,
+
+				"teacherName": assignment.TeacherName,
+
+				"dueDate": assignment.DueDate,
+
+				"totalStudents": assignment.TotalStudents,
+
+				"status": assignment.Status,
+
+				"updatedAt": assignment.UpdatedAt,
+			},
+		},
+	)
+
+	if err != nil {
+
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	json.NewEncoder(w).Encode(bson.M{
+		"success": true,
+		"message": "Assignment Updated Successfully",
+	})
+}
+
+
+// DELETE ASSIGNMENT
+
+func DeleteAssignment(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("Content-Type", "application/json")
+
+	id := mux.Vars(r)["id"]
+
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+
+		http.Error(w, "Invalid ID", 400)
+		return
+	}
+
+	_, err = config.DB.Collection("assignments").DeleteOne(
+		context.TODO(),
+		bson.M{
+			"_id": objID,
+		},
+	)
+
+	if err != nil {
+
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	json.NewEncoder(w).Encode(bson.M{
+		"success": true,
+		"message": "Assignment Deleted Successfully",
+	})
+}
+
+
+// SUBMIT ASSIGNMENT
+
 func SubmitAssignment(w http.ResponseWriter, r *http.Request) {
 
-	var input struct {
-		AssignmentID string `json:"assignment_id"`
-		StudentID    string `json:"student_id"`
-		FileURL      string `json:"file_url"`
+	w.Header().Set("Content-Type", "application/json")
+
+	var submission models.Submission
+
+	err := json.NewDecoder(r.Body).Decode(&submission)
+	if err != nil {
+
+		http.Error(w, err.Error(), 400)
+		return
 	}
 
-	json.NewDecoder(r.Body).Decode(&input)
+	submission.ID = primitive.NewObjectID()
 
-	assignmentID, _ := primitive.ObjectIDFromHex(input.AssignmentID)
-	studentID, _ := primitive.ObjectIDFromHex(input.StudentID)
+	submission.SubmittedAt = time.Now()
 
-	data := models.Submission{
-		AssignmentID: assignmentID,
-		StudentID:    studentID,
-		FileURL:      input.FileURL,
-		Marks:        0,
-		SubmittedAt:  time.Now(),
+	_, err = config.DB.Collection("submissions").InsertOne(
+		context.TODO(),
+		submission,
+	)
+
+	if err != nil {
+
+		http.Error(w, err.Error(), 500)
+		return
 	}
 
-	res, _ := config.DB.Collection("submissions").InsertOne(context.TODO(), data)
+	// INCREASE SUBMITTED COUNT
 
-	json.NewEncoder(w).Encode(res)
+	_, err = config.DB.Collection("assignments").UpdateOne(
+		context.TODO(),
+		bson.M{
+			"_id": submission.AssignmentID,
+		},
+		bson.M{
+			"$inc": bson.M{
+				"submittedCount": 1,
+			},
+		},
+	)
+
+	json.NewEncoder(w).Encode(bson.M{
+		"success": true,
+		"message": "Assignment Submitted Successfully",
+	})
 }
