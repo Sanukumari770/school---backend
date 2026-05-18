@@ -182,4 +182,6 @@ r.HandleFunc(
 	"/teacher/login",
 	auth.TeacherLoginController,
 ).Methods("POST")
+
+r.HandleFunc("/parent/login", auth.ParentLoginController).Methods("POST")
 }

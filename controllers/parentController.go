@@ -8,15 +8,14 @@ import (
 
 	"school/config"
 	"school/models"
-
+"golang.org/x/crypto/bcrypt"
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// ==========================
 // CREATE PARENT
-// ==========================
+
 
 func CreateParent(w http.ResponseWriter, r *http.Request) {
 
@@ -33,6 +32,21 @@ func CreateParent(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
+	// HASH PASSWORD
+
+	hashedPassword, err := bcrypt.GenerateFromPassword(
+		[]byte(parent.Password),
+		bcrypt.DefaultCost,
+	)
+
+	if err != nil {
+
+		http.Error(w, "Password hashing failed", http.StatusInternalServerError)
+		return
+	}
+
+	parent.Password = string(hashedPassword)
 
 	parent.ID = primitive.NewObjectID()
 
@@ -58,7 +72,6 @@ func CreateParent(w http.ResponseWriter, r *http.Request) {
 		"data": parent,
 	})
 }
-
 // add multiple parents 
 
 func AddMultipleParents(w http.ResponseWriter, r *http.Request) {
