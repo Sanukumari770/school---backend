@@ -11,8 +11,8 @@ import (
 	"school/models"
 
 	"github.com/golang-jwt/jwt/v5"
-	"golang.org/x/crypto/bcrypt"
 	"go.mongodb.org/mongo-driver/bson"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type TeacherLogin struct {
@@ -43,6 +43,9 @@ func TeacherLoginController(w http.ResponseWriter, r *http.Request) {
 	}
 
 	inputPassword := strings.TrimSpace(loginData.Password)
+
+	println("DB HASH:", teacher.Password)
+	println("USER PASSWORD:", inputPassword)
 
 	err = bcrypt.CompareHashAndPassword(
 		[]byte(teacher.Password),
