@@ -8,14 +8,13 @@ import (
 
 	"school/config"
 	"school/models"
-
+    "golang.org/x/crypto/bcrypt"
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // ADD SINGLE TEACHER
-
 
 func AddTeacher(w http.ResponseWriter, r *http.Request) {
 
@@ -25,13 +24,28 @@ func AddTeacher(w http.ResponseWriter, r *http.Request) {
 
 	var teacher models.Teacher
 
-	err := json.NewDecoder(r.Body).Decode(&teacher) // any new feilds add in models controller autaomatically fetch through this line 
+	err := json.NewDecoder(r.Body).Decode(&teacher)
 
 	if err != nil {
 
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
+	// HASH PASSWORD HERE
+
+	hashedPassword, err := bcrypt.GenerateFromPassword(
+		[]byte(teacher.Password),
+		bcrypt.DefaultCost,
+	)
+
+	if err != nil {
+
+		http.Error(w, "Password hashing failed", http.StatusInternalServerError)
+		return
+	}
+
+	teacher.Password = string(hashedPassword)
 
 	teacher.ID = primitive.NewObjectID()
 
@@ -58,6 +72,7 @@ func AddTeacher(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+
 // ADD MULTIPLE TEACHERS
 
 func AddMultipleTeachers(w http.ResponseWriter, r *http.Request) {
@@ -79,6 +94,21 @@ func AddMultipleTeachers(w http.ResponseWriter, r *http.Request) {
 	var docs []interface{}
 
 	for i := range teachers {
+
+		// HASH PASSWORD
+
+		hashedPassword, err := bcrypt.GenerateFromPassword(
+			[]byte(teachers[i].Password),
+			bcrypt.DefaultCost,
+		)
+
+		if err != nil {
+
+			http.Error(w, "Password hashing failed", http.StatusInternalServerError)
+			return
+		}
+
+		teachers[i].Password = string(hashedPassword)
 
 		teachers[i].ID = primitive.NewObjectID()
 
@@ -106,6 +136,7 @@ func AddMultipleTeachers(w http.ResponseWriter, r *http.Request) {
 		"inserted_ids": result.InsertedIDs,
 	})
 }
+
 
 // GET ALL TEACHERS
 

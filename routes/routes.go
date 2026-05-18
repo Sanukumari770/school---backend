@@ -176,4 +176,10 @@ protected.HandleFunc(
 	"/student/dashboard",
 	controllers.GetStudentDashboard,
 ).Methods("GET")
+
+// TEACHER LOGIN
+r.HandleFunc(
+	"/teacher/login",
+	auth.TeacherLoginController,
+).Methods("POST")
 }
