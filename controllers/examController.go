@@ -14,7 +14,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-
 // CREATE EXAM
 
 func CreateExam(w http.ResponseWriter, r *http.Request) {
@@ -52,7 +51,6 @@ func CreateExam(w http.ResponseWriter, r *http.Request) {
 		"message": "Exam Created Successfully",
 	})
 }
-
 
 // ADD MULTIPLE EXAMS
 
@@ -94,12 +92,11 @@ func AddMultipleExams(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(bson.M{
-		"success": true,
-		"message": "Multiple Exams Added Successfully",
+		"success":           true,
+		"message":           "Multiple Exams Added Successfully",
 		"total_exams_added": len(exams),
 	})
 }
-
 
 // GET ALL EXAMS
 
@@ -131,7 +128,6 @@ func GetExams(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(exams)
 }
-
 
 // GET SINGLE EXAM
 
@@ -165,7 +161,6 @@ func GetExamByID(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(exam)
 }
-
 
 // UPDATE EXAM
 
@@ -231,7 +226,6 @@ func UpdateExam(w http.ResponseWriter, r *http.Request) {
 		"message": "Exam Updated Successfully",
 	})
 }
-
 
 // DELETE EXAM
 

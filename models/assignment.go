@@ -7,7 +7,6 @@ import (
 )
 
 type Assignment struct {
-
 	ID primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
 
 	Title string `json:"title" bson:"title"`
@@ -32,7 +31,6 @@ type Assignment struct {
 }
 
 type Submission struct {
-
 	ID primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
 
 	AssignmentID primitive.ObjectID `json:"assignment_id" bson:"assignment_id"`

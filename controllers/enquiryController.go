@@ -15,10 +15,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-
-// =============================
-// CREATE ENQUIRY
-// =============================
+/// create enquiry
 
 func CreateEnquiry(w http.ResponseWriter, r *http.Request) {
 
@@ -56,11 +53,7 @@ func CreateEnquiry(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-
-// =============================
-// GET ALL ENQUIRIES
-// =============================
-
+// get all enquries
 func GetEnquiries(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
@@ -94,10 +87,7 @@ func GetEnquiries(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-
-// =============================
-// GET ENQUIRY BY ID
-// =============================
+// get enquiry by ID
 
 func GetEnquiryByID(w http.ResponseWriter, r *http.Request) {
 
@@ -134,11 +124,7 @@ func GetEnquiryByID(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-
-// =============================
-// UPDATE ENQUIRY STATUS
-// =============================
-
+// update enquiry satus
 func UpdateEnquiryStatus(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
@@ -153,7 +139,6 @@ func UpdateEnquiryStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var data struct {
-
 		Status string `json:"status"`
 	}
 
@@ -189,10 +174,7 @@ func UpdateEnquiryStatus(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-
-// =============================
-// DELETE ENQUIRY
-// =============================
+// delete enquiry
 
 func DeleteEnquiry(w http.ResponseWriter, r *http.Request) {
 

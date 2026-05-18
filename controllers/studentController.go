@@ -8,15 +8,14 @@ import (
 
 	"school/config"
 	"school/models"
-
+"golang.org/x/crypto/bcrypt"
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// ==========================
+
 // ADD SINGLE STUDENT
-// ==========================
 
 func AddStudent(w http.ResponseWriter, r *http.Request) {
 
@@ -29,10 +28,22 @@ func AddStudent(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&student)
 
 	if err != nil {
-
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
+	// HASH PASSWORD
+	hashedPassword, err := bcrypt.GenerateFromPassword(
+		[]byte(student.Password),
+		bcrypt.DefaultCost,
+	)
+
+	if err != nil {
+		http.Error(w, "Password hashing failed", http.StatusInternalServerError)
+		return
+	}
+
+	student.Password = string(hashedPassword)
 
 	student.ID = primitive.NewObjectID()
 
@@ -47,7 +58,6 @@ func AddStudent(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err != nil {
-
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -59,9 +69,10 @@ func AddStudent(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// ==========================
+
+
+
 // ADD MULTIPLE STUDENTS
-// ==========================
 
 func AddMultipleStudents(w http.ResponseWriter, r *http.Request) {
 

@@ -11,6 +11,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 )
+
 func AddMultipleClasses(w http.ResponseWriter, r *http.Request) {
 
 	var classes []models.Class
@@ -39,7 +40,6 @@ func AddMultipleClasses(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(res)
 }
-
 
 func GetClasses(w http.ResponseWriter, r *http.Request) {
 

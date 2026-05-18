@@ -3,6 +3,7 @@ package routes
 
 import (
 "net/http"
+auth "school/controllers/auth"
 "school/controllers"
 "school/middleware"
 "github.com/gorilla/mux"
@@ -21,10 +22,6 @@ func SetupRoutes(r *mux.Router) {
 	// Protected Routes
 	protected := r.PathPrefix("/").Subrouter()
 	protected.Use(middleware.AuthMiddleware)
-	
-	// Dashboard admin api full data total students , teacher , 
-	protected.HandleFunc("/dashboard", controllers.GetDashboard).Methods("GET")
-
 	
 	// Attendance
 protected.HandleFunc("/attendance", controllers.AddAttendance).Methods("POST")
@@ -168,4 +165,15 @@ r.HandleFunc("/assignment/{id}", controllers.DeleteAssignment).Methods("DELETE")
 
 r.HandleFunc("/submit", controllers.SubmitAssignment).Methods("POST")
 
+// STUDENT LOGIN
+r.HandleFunc(
+	"/student/login",
+	auth.StudentLoginController,
+).Methods("POST")
+
+// STUDENT DASHBOARD
+protected.HandleFunc(
+	"/student/dashboard",
+	controllers.GetStudentDashboard,
+).Methods("GET")
 }

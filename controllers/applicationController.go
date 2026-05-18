@@ -15,7 +15,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-
 // =============================
 // CREATE APPLICATION
 // =============================
@@ -59,7 +58,6 @@ func CreateApplication(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-
 // =============================
 // GET ALL APPLICATIONS
 // =============================
@@ -92,7 +90,6 @@ func GetApplications(w http.ResponseWriter, r *http.Request) {
 		"data":    applications,
 	})
 }
-
 
 // =============================
 // GET APPLICATION BY ID
@@ -172,7 +169,6 @@ func GetApplicationByID(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-
 // =============================
 // UPDATE ENTRANCE RESULT
 // =============================
@@ -191,7 +187,6 @@ func UpdateEntranceResult(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var data struct {
-
 		EntranceMarks  int    `json:"entranceMarks"`
 		EntranceResult string `json:"entranceResult"`
 		MeritRank      int    `json:"meritRank"`
@@ -237,7 +232,6 @@ func UpdateEntranceResult(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-
 // =============================
 // ALLOCATE SEAT
 // =============================
@@ -256,7 +250,6 @@ func AllocateSeat(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var data struct {
-
 		SeatAllocated bool   `json:"seatAllocated"`
 		Section       string `json:"section"`
 	}
@@ -300,7 +293,6 @@ func AllocateSeat(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-
 // =============================
 // UPDATE FEE STATUS
 // =============================
@@ -319,7 +311,6 @@ func UpdateFeeStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var data struct {
-
 		FeePaid bool `json:"feePaid"`
 	}
 
@@ -334,7 +325,7 @@ func UpdateFeeStatus(w http.ResponseWriter, r *http.Request) {
 
 		"$set": bson.M{
 
-			"feePaid":  data.FeePaid,
+			"feePaid":   data.FeePaid,
 			"updatedAt": time.Now(),
 		},
 	}
@@ -358,7 +349,6 @@ func UpdateFeeStatus(w http.ResponseWriter, r *http.Request) {
 		"message": "Fee Updated Successfully",
 	})
 }
-
 
 // =============================
 // APPROVE APPLICATION
@@ -460,12 +450,11 @@ func ApproveApplication(w http.ResponseWriter, r *http.Request) {
 		)
 
 	json.NewEncoder(w).Encode(bson.M{
-		"success": true,
-		"message": "Admission Approved",
+		"success":   true,
+		"message":   "Admission Approved",
 		"studentId": studentID,
 	})
 }
-
 
 // =============================
 // REJECT APPLICATION

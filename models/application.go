@@ -1,10 +1,10 @@
-
-//admission application form and application number 
+//admission application form and application number
 
 package models
+
 import (
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"time"
-"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Application struct {
@@ -20,7 +20,7 @@ type Application struct {
 
 	// student info
 	StudentName string `bson:"studentName" json:"studentName"`
-	DOB string `bson:"dob" json:"dob"`
+	DOB         string `bson:"dob" json:"dob"`
 
 	Email string `bson:"email" json:"email"`
 	Phone string `bson:"phone" json:"phone"`
@@ -31,7 +31,7 @@ type Application struct {
 	Documents []Document `bson:"documents" json:"documents"`
 
 	// entrance
-	EntranceMarks int `bson:"entranceMarks" json:"entranceMarks"`
+	EntranceMarks  int    `bson:"entranceMarks" json:"entranceMarks"`
 	EntranceResult string `bson:"entranceResult" json:"entranceResult"`
 
 	// merit
@@ -42,7 +42,7 @@ type Application struct {
 
 	// hostel / transport
 	Transport bool `bson:"transport" json:"transport"`
-	Hostel bool `bson:"hostel" json:"hostel"`
+	Hostel    bool `bson:"hostel" json:"hostel"`
 
 	// payment
 	FeePaid bool `bson:"feePaid" json:"feePaid"`

@@ -14,7 +14,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-
 // CREATE ASSIGNMENT
 
 func CreateAssignment(w http.ResponseWriter, r *http.Request) {
@@ -55,7 +54,6 @@ func CreateAssignment(w http.ResponseWriter, r *http.Request) {
 		"message": "Assignment Created Successfully",
 	})
 }
-
 
 // ADD MULTIPLE ASSIGNMENTS
 
@@ -99,12 +97,11 @@ func AddMultipleAssignments(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(bson.M{
-		"success": true,
-		"message": "Multiple Assignments Added Successfully",
+		"success":                 true,
+		"message":                 "Multiple Assignments Added Successfully",
 		"total_assignments_added": len(assignments),
 	})
 }
-
 
 // GET ALL ASSIGNMENTS
 
@@ -136,7 +133,6 @@ func GetAssignments(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(assignments)
 }
-
 
 // GET SINGLE ASSIGNMENT
 
@@ -170,7 +166,6 @@ func GetAssignmentByID(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(assignment)
 }
-
 
 // UPDATE ASSIGNMENT
 
@@ -237,7 +232,6 @@ func UpdateAssignment(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-
 // DELETE ASSIGNMENT
 
 func DeleteAssignment(w http.ResponseWriter, r *http.Request) {
@@ -271,7 +265,6 @@ func DeleteAssignment(w http.ResponseWriter, r *http.Request) {
 		"message": "Assignment Deleted Successfully",
 	})
 }
-
 
 // SUBMIT ASSIGNMENT
 

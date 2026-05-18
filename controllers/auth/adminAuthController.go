@@ -1,6 +1,4 @@
-
-
-package controllers
+package auth
 
 import (
 	"context"
@@ -15,13 +13,13 @@ func AdminCreateStudent(w http.ResponseWriter, r *http.Request) {
 
 	var student models.Student
 	json.NewDecoder(r.Body).Decode(&student)
-collection := config.DB.Collection("students")
-result, err := collection.InsertOne(context.TODO(), student)
+	collection := config.DB.Collection("students")
+	result, err := collection.InsertOne(context.TODO(), student)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-json.NewEncoder(w).Encode(result)
+	json.NewEncoder(w).Encode(result)
 }
 
 // Create Class

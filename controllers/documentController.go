@@ -1,17 +1,15 @@
-
-
-
-
 package controllers
+
 import (
 	"context"
 	"encoding/json"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"net/http"
-	"time"
 	"school/config"
 	"school/models"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"time"
 )
+
 func UploadDocument(w http.ResponseWriter, r *http.Request) {
 
 	var doc models.Document

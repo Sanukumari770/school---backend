@@ -15,6 +15,8 @@ type Student struct {
 
 	Email string `json:"email" bson:"email"` // email of students 
 
+	Password string `json:"password,omitempty" bson:"password"`
+	
 	Phone string `json:"phone" bson:"phone"` // phone number of students 
 
 	Class string `json:"class" bson:"class"` // class of students 
