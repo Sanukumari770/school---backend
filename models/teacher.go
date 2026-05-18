@@ -13,7 +13,7 @@ type Teacher struct {
 
 	Email string `json:"email" bson:"email"` // teachers email 
 
-	Password string `json:"password,omitempty" bson:"password"`
+	Password string `json:"password" bson:"password"`
 
 	Subject string `json:"subject" bson:"subject"` // assign subjects of teacher 
 
