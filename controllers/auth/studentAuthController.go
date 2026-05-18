@@ -42,11 +42,13 @@ func StudentLoginController(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// compare password
-	err = bcrypt.CompareHashAndPassword(
-		[]byte(student.Password),
-		[]byte(loginData.Password),
-	)
+	println("DB HASH:", student.Password)
+    println("USER PASSWORD:", loginData.Password)
 
+err = bcrypt.CompareHashAndPassword(
+	[]byte(student.Password),
+	[]byte(loginData.Password),
+)
 	if err != nil {
 		http.Error(w, "Invalid password", http.StatusUnauthorized)
 		return
