@@ -183,5 +183,15 @@ r.HandleFunc(
 	auth.TeacherLoginController,
 ).Methods("POST")
 
+// parents login 
 r.HandleFunc("/parent/login", auth.ParentLoginController).Methods("POST")
+
+// notices
+r.HandleFunc("/notices", controllers.CreateNotice).Methods("POST")
+r.HandleFunc("/notices/bulk", controllers.AddMultipleNotices).Methods("POST")
+	r.HandleFunc("/notices", controllers.GetNotices).Methods("GET")
+
+	r.HandleFunc("/notices/{id}", controllers.GetNotice).Methods("GET")
+
+	r.HandleFunc("/notices/{id}", controllers.DeleteNotice).Methods("DELETE")
 }

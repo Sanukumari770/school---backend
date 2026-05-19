@@ -44,3 +44,7 @@ func ConnectDB() {
 	// select databse
 	DB = client.Database("school")
 }
+// ADD THIS FUNCTION
+func GetCollection(collectionName string) *mongo.Collection {
+	return DB.Collection(collectionName)
+}
