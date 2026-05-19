@@ -145,13 +145,18 @@ func AssignTransport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// CHECK SEAT AVAILABLE
+	// CHECK SEATS
 	if bus.OccupiedSeats >= bus.TotalSeats {
 		http.Error(w, "Bus is Full", 400)
 		return
 	}
 
 	transport.ID = primitive.NewObjectID()
+
+	// AUTO ASSIGN
+	transport.BusNo = bus.BusNo
+	transport.Route = bus.Route
+
 	transport.CreatedAt = time.Now()
 
 	_, err = config.DB.Collection("transport").InsertOne(
@@ -164,7 +169,7 @@ func AssignTransport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// INCREASE OCCUPIED SEAT
+	// UPDATE OCCUPIED SEAT
 	_, err = config.DB.Collection("buses").UpdateOne(
 		context.TODO(),
 		bson.M{
@@ -187,7 +192,6 @@ func AssignTransport(w http.ResponseWriter, r *http.Request) {
 		"message": "Transport Assigned Successfully",
 	})
 }
-
 // FULL TRANSPORT DETAILS
 
 func GetTransportDetails(w http.ResponseWriter, r *http.Request) {
