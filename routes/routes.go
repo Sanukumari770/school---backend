@@ -1,199 +1,221 @@
-
 package routes
 
 import (
-"net/http"
-auth "school/controllers/auth"
-"school/controllers"
-"school/middleware"
-"github.com/gorilla/mux"
+	"net/http"
+
+	auth "school/controllers/auth"
+	"school/controllers"
+	"school/middleware"
+
+	"github.com/gorilla/mux"
 )
+
 func SetupRoutes(r *mux.Router) {
 
-	// Test
-	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { // mux 
+	// TEST ROUTE
+	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("API working"))
 	}).Methods("GET")
 
-	// Auth controllers 
+	// ================= AUTH ROUTES =================
+
 	r.HandleFunc("/register", controllers.Register).Methods("POST")
+
 	r.HandleFunc("/login", controllers.Login).Methods("POST")
 
-	// Protected Routes
-	protected := r.PathPrefix("/").Subrouter()
+	r.HandleFunc("/student/login", auth.StudentLoginController).Methods("POST")
+
+	r.HandleFunc("/teacher/login", auth.TeacherLoginController).Methods("POST")
+
+	r.HandleFunc("/parent/login", auth.ParentLoginController).Methods("POST")
+
+	// ================= PUBLIC NOTICE ROUTES =================
+
+	r.HandleFunc("/notices", controllers.CreateNotice).Methods("POST")
+
+	r.HandleFunc("/notices/bulk", controllers.AddMultipleNotices).Methods("POST")
+
+	r.HandleFunc("/notices", controllers.GetNotices).Methods("GET")
+
+	r.HandleFunc("/notices/{id}", controllers.GetNotice).Methods("GET")
+
+	r.HandleFunc("/notices/{id}", controllers.DeleteNotice).Methods("DELETE")
+
+	// ================= PROTECTED ROUTES =================
+
+	protected := r.PathPrefix("/api").Subrouter()
+
 	protected.Use(middleware.AuthMiddleware)
-	
-	// Attendance
-protected.HandleFunc("/attendance", controllers.AddAttendance).Methods("POST")
 
-// Marks
-protected.HandleFunc("/marks", controllers.AddMarks).Methods("POST")
+	// ================= ATTENDANCE =================
 
-// Parent APIs
+	protected.HandleFunc("/attendance", controllers.AddAttendance).Methods("POST")
 
-protected.HandleFunc("/parents", controllers.CreateParent).Methods("POST")
+	// ================= MARKS =================
 
-protected.HandleFunc("/parents", controllers.GetParents).Methods("GET")
+	protected.HandleFunc("/marks", controllers.AddMarks).Methods("POST")
 
-protected.HandleFunc("/parents/multiple", controllers.AddMultipleParents).Methods("POST")
+	// ================= PARENTS =================
 
-protected.HandleFunc("/parents/full/{id}", controllers.GetParentFull).Methods("GET")
+	protected.HandleFunc("/parents", controllers.CreateParent).Methods("POST")
 
-protected.HandleFunc("/parents/{id}", controllers.UpdateParent).Methods("PUT")
+	protected.HandleFunc("/parents", controllers.GetParents).Methods("GET")
 
-protected.HandleFunc("/parents/{id}", controllers.DeleteParent).Methods("DELETE")
+	protected.HandleFunc("/parents/multiple", controllers.AddMultipleParents).Methods("POST")
 
-// Parent protected
-parentRouter := r.PathPrefix("/parent").Subrouter()
-parentRouter.Use(middleware.AuthMiddleware)
-parentRouter.Use(middleware.Authorize("parent"))
-parentRouter.HandleFunc("/dashboard/{id}", controllers.GetParentDashboard).Methods("GET")
+	protected.HandleFunc("/parents/full/{id}", controllers.GetParentFull).Methods("GET")
 
-//------------ Role based acces control  middleware ------------------
-// Admin only
-protected.Handle("/teacher", middleware.Authorize("admin")(http.HandlerFunc(controllers.AddTeacher))).Methods("POST")
+	protected.HandleFunc("/parents/{id}", controllers.UpdateParent).Methods("PUT")
 
-// Teacher only
-protected.Handle("/attendance", middleware.Authorize("teacher")(http.HandlerFunc(controllers.AddAttendance))).Methods("POST")
+	protected.HandleFunc("/parents/{id}", controllers.DeleteParent).Methods("DELETE")
 
-// Parent only
-protected.Handle("/parent/{id}", middleware.Authorize("parent")(http.HandlerFunc(controllers.GetParentFull))).Methods("GET")
+	// ================= ROLE BASED ACCESS =================
 
-// dashboard parents 
-protected.Handle(
-	"/parent/dashboard",
-	middleware.Authorize("parent")(http.HandlerFunc(controllers.GetParentDashboard)),
-).Methods("GET")
-
-
-// TEACHER MODULE
-protected.Handle("/teacher",
+	// Admin only
+	protected.Handle(
+		"/teacher",
 		middleware.Authorize("admin")(http.HandlerFunc(controllers.AddTeacher)),
 	).Methods("POST")
-    protected.HandleFunc("/teachers", controllers.AddTeacher).Methods("POST")  // add single tecaher 
-	protected.HandleFunc("/teachers", controllers.GetTeachers).Methods("GET") // get teacher deatils 
+
+	// Teacher only
+	protected.Handle(
+		"/attendance",
+		middleware.Authorize("teacher")(http.HandlerFunc(controllers.AddAttendance)),
+	).Methods("POST")
+
+	// Parent only
+	protected.Handle(
+		"/parent/{id}",
+		middleware.Authorize("parent")(http.HandlerFunc(controllers.GetParentFull)),
+	).Methods("GET")
+
+	// ================= PARENT DASHBOARD =================
+
+	parentRouter := protected.PathPrefix("/parent").Subrouter()
+
+	parentRouter.Use(middleware.Authorize("parent"))
+
+	parentRouter.HandleFunc(
+		"/dashboard/{id}",
+		controllers.GetParentDashboard,
+	).Methods("GET")
+
+	// ================= TEACHERS =================
+
+	protected.HandleFunc("/teachers", controllers.AddTeacher).Methods("POST")
+
+	protected.HandleFunc("/teachers", controllers.GetTeachers).Methods("GET")
+
 	protected.HandleFunc("/teachers/bulk", controllers.AddMultipleTeachers).Methods("POST")
 
 	protected.HandleFunc("/teachers/{id}", controllers.GetTeacherByID).Methods("GET")
+
 	protected.HandleFunc("/teachers/{id}", controllers.UpdateTeacher).Methods("PUT")
+
 	protected.HandleFunc("/teachers/{id}", controllers.DeleteTeacher).Methods("DELETE")
 
+	// ================= SALARY =================
 
-// SALARY
-protected.HandleFunc("/salary", controllers.AddSalary).Methods("POST")
-protected.HandleFunc("/salary/{teacherId}", controllers.GetSalaryByTeacher).Methods("GET")
+	protected.HandleFunc("/salary", controllers.AddSalary).Methods("POST")
 
-// CLASS
-protected.HandleFunc("/classes/bulk", controllers.AddMultipleClasses).Methods("POST")
-protected.HandleFunc("/classes", controllers.GetClasses).Methods("GET")
+	protected.HandleFunc("/salary/{teacherId}", controllers.GetSalaryByTeacher).Methods("GET")
 
+	// ================= CLASSES =================
 
+	protected.HandleFunc("/classes/bulk", controllers.AddMultipleClasses).Methods("POST")
 
-// BULK 
-protected.HandleFunc("/subjects/bulk", controllers.AddMultipleSubjects).Methods("POST")
+	protected.HandleFunc("/classes", controllers.GetClasses).Methods("GET")
 
-// fees
-protected.HandleFunc("/create-fee", controllers.CreateFee).Methods("POST")
-protected.HandleFunc("/create-bulk-fee", controllers.CreateBulkFee).Methods("POST")
-protected.HandleFunc("/pay-fee", controllers.PayFee).Methods("POST")
-protected.HandleFunc("/fees", controllers.GetAllFees).Methods("GET")
+	// ================= SUBJECTS =================
 
-// transport
+	protected.HandleFunc("/subjects/bulk", controllers.AddMultipleSubjects).Methods("POST")
 
-r.HandleFunc("/buses", controllers.CreateBus).Methods("POST")
-r.HandleFunc("/buses", controllers.GetBuses).Methods("GET")
-r.HandleFunc("/buses/{id}", controllers.GetBusByID).Methods("GET")
-r.HandleFunc("/buses/bulk", controllers.AddMultipleBuses).Methods("POST")
-r.HandleFunc("/transport", controllers.AssignTransport).Methods("POST")
-r.HandleFunc("/transport", controllers.GetTransportDetails).Methods("GET")
+	// ================= FEES =================
 
-// STUDENTS
-protected.HandleFunc("/students", controllers.AddStudent).Methods("POST")
-protected.HandleFunc("/students", controllers.GetStudents).Methods("GET")
+	protected.HandleFunc("/create-fee", controllers.CreateFee).Methods("POST")
 
-protected.HandleFunc("/students/bulk", controllers.AddMultipleStudents).Methods("POST")
+	protected.HandleFunc("/create-bulk-fee", controllers.CreateBulkFee).Methods("POST")
 
-protected.HandleFunc("/students/{id}", controllers.GetStudentByID).Methods("GET")
+	protected.HandleFunc("/pay-fee", controllers.PayFee).Methods("POST")
 
-protected.HandleFunc("/students/{id}", controllers.GetStudentByID).Methods("GET")
+	protected.HandleFunc("/fees", controllers.GetAllFees).Methods("GET")
 
+	// ================= STUDENTS =================
 
-protected.HandleFunc("/students/{id}", controllers.UpdateStudent).Methods("PUT")
+	protected.HandleFunc("/students", controllers.AddStudent).Methods("POST")
 
-protected.HandleFunc("/students/{id}", controllers.DeleteStudent).Methods("DELETE")
+	protected.HandleFunc("/students", controllers.GetStudents).Methods("GET")
 
+	protected.HandleFunc("/students/bulk", controllers.AddMultipleStudents).Methods("POST")
 
-// LIBRARY
-r.HandleFunc("/books", controllers.AddBook).Methods("POST")
-r.HandleFunc("/books", controllers.GetBooks).Methods("GET")
-r.HandleFunc("/books/bulk", controllers.AddMultipleBooks).Methods("POST")
-r.HandleFunc("/library/issue", controllers.IssueBook).Methods("POST")
+	protected.HandleFunc("/students/{id}", controllers.GetStudentByID).Methods("GET")
 
-r.HandleFunc("/library/return", controllers.ReturnBook).Methods("PUT")
+	protected.HandleFunc("/students/{id}", controllers.UpdateStudent).Methods("PUT")
 
-r.HandleFunc("/library/details", controllers.GetLibraryDetails).Methods("GET")
+	protected.HandleFunc("/students/{id}", controllers.DeleteStudent).Methods("DELETE")
 
+	// ================= STUDENT DASHBOARD =================
 
-// EXAM ROUTES
+	protected.HandleFunc(
+		"/student/dashboard",
+		controllers.GetStudentDashboard,
+	).Methods("GET")
 
-r.HandleFunc("/exam", controllers.CreateExam).Methods("POST")
+	// ================= TRANSPORT =================
 
-r.HandleFunc("/exam/bulk", controllers.AddMultipleExams).Methods("POST")
+	r.HandleFunc("/buses", controllers.CreateBus).Methods("POST")
 
-r.HandleFunc("/exam", controllers.GetExams).Methods("GET")
+	r.HandleFunc("/buses", controllers.GetBuses).Methods("GET")
 
-r.HandleFunc("/exam/{id}", controllers.GetExamByID).Methods("GET")
+	r.HandleFunc("/buses/{id}", controllers.GetBusByID).Methods("GET")
 
-r.HandleFunc("/exam/{id}", controllers.UpdateExam).Methods("PUT")
+	r.HandleFunc("/buses/bulk", controllers.AddMultipleBuses).Methods("POST")
 
-r.HandleFunc("/exam/{id}", controllers.DeleteExam).Methods("DELETE")
+	r.HandleFunc("/transport", controllers.AssignTransport).Methods("POST")
 
+	r.HandleFunc("/transport", controllers.GetTransportDetails).Methods("GET")
 
-// ASSIGNMENT ROUTES
+	// ================= LIBRARY =================
 
-r.HandleFunc("/assignment", controllers.CreateAssignment).Methods("POST")
+	r.HandleFunc("/books", controllers.AddBook).Methods("POST")
 
-r.HandleFunc("/assignment/bulk", controllers.AddMultipleAssignments).Methods("POST")
+	r.HandleFunc("/books", controllers.GetBooks).Methods("GET")
 
-r.HandleFunc("/assignment", controllers.GetAssignments).Methods("GET")
+	r.HandleFunc("/books/bulk", controllers.AddMultipleBooks).Methods("POST")
 
-r.HandleFunc("/assignment/{id}", controllers.GetAssignmentByID).Methods("GET")
+	r.HandleFunc("/library/issue", controllers.IssueBook).Methods("POST")
 
-r.HandleFunc("/assignment/{id}", controllers.UpdateAssignment).Methods("PUT")
+	r.HandleFunc("/library/return", controllers.ReturnBook).Methods("PUT")
 
-r.HandleFunc("/assignment/{id}", controllers.DeleteAssignment).Methods("DELETE")
+	r.HandleFunc("/library/details", controllers.GetLibraryDetails).Methods("GET")
 
-r.HandleFunc("/submit", controllers.SubmitAssignment).Methods("POST")
+	// ================= EXAMS =================
 
-// STUDENT LOGIN
-r.HandleFunc(
-	"/student/login",
-	auth.StudentLoginController,
-).Methods("POST")
+	r.HandleFunc("/exam", controllers.CreateExam).Methods("POST")
 
-// STUDENT DASHBOARD
-protected.HandleFunc(
-	"/student/dashboard",
-	controllers.GetStudentDashboard,
-).Methods("GET")
+	r.HandleFunc("/exam/bulk", controllers.AddMultipleExams).Methods("POST")
 
-// TEACHER LOGIN
-r.HandleFunc(
-	"/teacher/login",
-	auth.TeacherLoginController,
-).Methods("POST")
+	r.HandleFunc("/exam", controllers.GetExams).Methods("GET")
 
-// parents login 
-r.HandleFunc("/parent/login", auth.ParentLoginController).Methods("POST")
+	r.HandleFunc("/exam/{id}", controllers.GetExamByID).Methods("GET")
 
-// notices
-r.HandleFunc("/notices", controllers.CreateNotice).Methods("POST")
+	r.HandleFunc("/exam/{id}", controllers.UpdateExam).Methods("PUT")
 
-r.HandleFunc("/notices/bulk", controllers.AddMultipleNotices).Methods("POST")
+	r.HandleFunc("/exam/{id}", controllers.DeleteExam).Methods("DELETE")
 
-r.HandleFunc("/notices", controllers.GetNotices).Methods("GET")
+	// ================= ASSIGNMENTS =================
 
-r.HandleFunc("/notices/{id}", controllers.GetNotice).Methods("GET")
+	r.HandleFunc("/assignment", controllers.CreateAssignment).Methods("POST")
 
-r.HandleFunc("/notices/{id}", controllers.DeleteNotice).Methods("DELETE")
+	r.HandleFunc("/assignment/bulk", controllers.AddMultipleAssignments).Methods("POST")
+
+	r.HandleFunc("/assignment", controllers.GetAssignments).Methods("GET")
+
+	r.HandleFunc("/assignment/{id}", controllers.GetAssignmentByID).Methods("GET")
+
+	r.HandleFunc("/assignment/{id}", controllers.UpdateAssignment).Methods("PUT")
+
+	r.HandleFunc("/assignment/{id}", controllers.DeleteAssignment).Methods("DELETE")
+
+	r.HandleFunc("/submit", controllers.SubmitAssignment).Methods("POST")
 }
