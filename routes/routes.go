@@ -102,17 +102,17 @@ func SetupRoutes(r *mux.Router) {
 
 	// ================= TEACHERS =================
 
-	protected.HandleFunc("/teachers", controllers.AddTeacher).Methods("POST")
+	r.HandleFunc("/teachers", controllers.AddTeacher).Methods("POST")
 
-	protected.HandleFunc("/teachers", controllers.GetTeachers).Methods("GET")
+	r.HandleFunc("/teachers", controllers.GetTeachers).Methods("GET")
 
-	protected.HandleFunc("/teachers/bulk", controllers.AddMultipleTeachers).Methods("POST")
+	r.HandleFunc("/teachers/bulk", controllers.AddMultipleTeachers).Methods("POST")
 
-	protected.HandleFunc("/teachers/{id}", controllers.GetTeacherByID).Methods("GET")
+	r.HandleFunc("/teachers/{id}", controllers.GetTeacherByID).Methods("GET")
 
-	protected.HandleFunc("/teachers/{id}", controllers.UpdateTeacher).Methods("PUT")
+	r.HandleFunc("/teachers/{id}", controllers.UpdateTeacher).Methods("PUT")
 
-	protected.HandleFunc("/teachers/{id}", controllers.DeleteTeacher).Methods("DELETE")
+	r.HandleFunc("/teachers/{id}", controllers.DeleteTeacher).Methods("DELETE")
 
 	// ================= SALARY =================
 
@@ -142,17 +142,17 @@ func SetupRoutes(r *mux.Router) {
 
 	// ================= STUDENTS =================
 
-	protected.HandleFunc("/students", controllers.AddStudent).Methods("POST")
+	r.HandleFunc("/students", controllers.AddStudent).Methods("POST")
 
-	protected.HandleFunc("/students", controllers.GetStudents).Methods("GET")
+	r.HandleFunc("/students", controllers.GetStudents).Methods("GET")
 
-	protected.HandleFunc("/students/bulk", controllers.AddMultipleStudents).Methods("POST")
+	r.HandleFunc("/students/bulk", controllers.AddMultipleStudents).Methods("POST")
 
-	protected.HandleFunc("/students/{id}", controllers.GetStudentByID).Methods("GET")
+	r.HandleFunc("/students/{id}", controllers.GetStudentByID).Methods("GET")
 
-	protected.HandleFunc("/students/{id}", controllers.UpdateStudent).Methods("PUT")
+	r.HandleFunc("/students/{id}", controllers.UpdateStudent).Methods("PUT")
 
-	protected.HandleFunc("/students/{id}", controllers.DeleteStudent).Methods("DELETE")
+	r.HandleFunc("/students/{id}", controllers.DeleteStudent).Methods("DELETE")
 
 	// ================= STUDENT DASHBOARD =================
 
