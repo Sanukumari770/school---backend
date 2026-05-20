@@ -29,7 +29,7 @@ func SetupRoutes(r *mux.Router) {
 
 	r.HandleFunc("/parent/login", auth.ParentLoginController).Methods("POST")
 
-	// ================= PUBLIC NOTICE ROUTES =================
+	// ================= PUBLIC NOTICE ROUTES ===========
 
 	r.HandleFunc("/notices", controllers.CreateNotice).Methods("POST")
 
@@ -57,17 +57,17 @@ func SetupRoutes(r *mux.Router) {
 
 	// ================= PARENTS =================
 
-	protected.HandleFunc("/parents", controllers.CreateParent).Methods("POST")
+	r.HandleFunc("/parents", controllers.CreateParent).Methods("POST")
 
-	protected.HandleFunc("/parents", controllers.GetParents).Methods("GET")
+	r.HandleFunc("/parents", controllers.GetParents).Methods("GET")
 
-	protected.HandleFunc("/parents/multiple", controllers.AddMultipleParents).Methods("POST")
+	r.HandleFunc("/parents/multiple", controllers.AddMultipleParents).Methods("POST")
 
-	protected.HandleFunc("/parents/full/{id}", controllers.GetParentFull).Methods("GET")
+	r.HandleFunc("/parents/full/{id}", controllers.GetParentFull).Methods("GET")
 
-	protected.HandleFunc("/parents/{id}", controllers.UpdateParent).Methods("PUT")
+	r.HandleFunc("/parents/{id}", controllers.UpdateParent).Methods("PUT")
 
-	protected.HandleFunc("/parents/{id}", controllers.DeleteParent).Methods("DELETE")
+	r.HandleFunc("/parents/{id}", controllers.DeleteParent).Methods("DELETE")
 
 	// ================= ROLE BASED ACCESS =================
 
@@ -116,15 +116,15 @@ func SetupRoutes(r *mux.Router) {
 
 	// ================= SALARY =================
 
-	protected.HandleFunc("/salary", controllers.AddSalary).Methods("POST")
+	r.HandleFunc("/salary", controllers.AddSalary).Methods("POST")
 
-	protected.HandleFunc("/salary/{teacherId}", controllers.GetSalaryByTeacher).Methods("GET")
+	r.HandleFunc("/salary/{teacherId}", controllers.GetSalaryByTeacher).Methods("GET")
 
 	// ================= CLASSES =================
 
-	protected.HandleFunc("/classes/bulk", controllers.AddMultipleClasses).Methods("POST")
+	r.HandleFunc("/classes/bulk", controllers.AddMultipleClasses).Methods("POST")
 
-	protected.HandleFunc("/classes", controllers.GetClasses).Methods("GET")
+    r.HandleFunc("/classes", controllers.GetClasses).Methods("GET")
 
 	// ================= SUBJECTS =================
 
@@ -132,13 +132,13 @@ func SetupRoutes(r *mux.Router) {
 
 	// ================= FEES =================
 
-	protected.HandleFunc("/create-fee", controllers.CreateFee).Methods("POST")
+	r.HandleFunc("/create-fee", controllers.CreateFee).Methods("POST")
 
-	protected.HandleFunc("/create-bulk-fee", controllers.CreateBulkFee).Methods("POST")
+	r.HandleFunc("/create-bulk-fee", controllers.CreateBulkFee).Methods("POST")
 
-	protected.HandleFunc("/pay-fee", controllers.PayFee).Methods("POST")
+	r.HandleFunc("/pay-fee", controllers.PayFee).Methods("POST")
 
-	protected.HandleFunc("/fees", controllers.GetAllFees).Methods("GET")
+	r.HandleFunc("/fees", controllers.GetAllFees).Methods("GET")
 
 	// ================= STUDENTS =================
 

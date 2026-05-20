@@ -127,10 +127,8 @@ func AddMultipleStudents(w http.ResponseWriter, r *http.Request) {
 		"inserted_ids": result.InsertedIDs,
 	})
 }
-
-// ==========================
 // GET ALL STUDENTS
-// ==========================
+
 
 func GetStudents(w http.ResponseWriter, r *http.Request) {
 
@@ -179,9 +177,9 @@ func GetStudents(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// ==========================
+
 // GET SINGLE STUDENT
-// ==========================
+
 
 func GetStudentByID(w http.ResponseWriter, r *http.Request) {
 
@@ -217,9 +215,8 @@ func GetStudentByID(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(student)
 }
 
-// ==========================
 // GET FULL STUDENT DATA
-// ==========================
+
 
 func GetStudentFull(w http.ResponseWriter, r *http.Request) {
 
@@ -340,9 +337,8 @@ func GetStudentFull(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(result)
 }
 
-// ==========================
 // UPDATE STUDENT
-// ==========================
+
 
 func UpdateStudent(w http.ResponseWriter, r *http.Request) {
 
@@ -394,9 +390,9 @@ func UpdateStudent(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// ==========================
+
 // DELETE STUDENT
-// ==========================
+
 
 func DeleteStudent(w http.ResponseWriter, r *http.Request) {
 

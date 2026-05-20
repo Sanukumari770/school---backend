@@ -17,7 +17,7 @@ var DB *mongo.Database
 func ConnectDB() {
 
 	// change this line for securing data (mongoDB URI ) //
-	uri := os.Getenv("MONGO_URI")
+	uri := os.Getenv("MONGO_URI") // .env for security 
 	if uri == "" {
 		log.Fatal("MONGO_URI not found in .env")
 	}
@@ -44,7 +44,7 @@ func ConnectDB() {
 	// select databse
 	DB = client.Database("school")
 }
-// ADD THIS FUNCTION
+// ADD this function for collections 
 func GetCollection(collectionName string) *mongo.Collection {
 	return DB.Collection(collectionName)
 }

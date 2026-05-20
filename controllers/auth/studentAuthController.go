@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"net/http"
 	"time"
-
+// for school models 
 	"school/config"
 	"school/models"
-
+// for security and jwt token 
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 	"go.mongodb.org/mongo-driver/bson"

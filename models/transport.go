@@ -16,9 +16,9 @@ type Transport struct {
 
 	BusID primitive.ObjectID `json:"bus_id" bson:"bus_id"`
 
-	BusNo string `json:"bus_no" bson:"bus_no"`
+	BusNo string `json:"bus_no" bson:"bus_no"`// bus no 
 
-	Route string `json:"route" bson:"route"`
+	Route string `json:"route" bson:"route"`// routes from where students connected to bus 
 
 	CreatedAt time.Time `json:"createdAt" bson:"createdAt"`
 }
